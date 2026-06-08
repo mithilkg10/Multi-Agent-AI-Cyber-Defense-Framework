@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ABHEDYA — Secure Cyber Operations Login</title>
+  
+  <!-- Modern Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #020406;
+      --panel: rgba(10, 15, 24, 0.72);
+      --panel-border: rgba(255, 115, 0, 0.3);
+      --accent: #ff7300;
+      --accent-glow: rgba(255, 115, 0, 0.45);
+      --accent-2: #ffae42;
+      --accent-2-glow: rgba(255, 174, 66, 0.35);
+      --muted: #8b9bb0;
+      --foreground: #f0f4f9;
+      --glass-bg: rgba(8, 12, 20, 0.85);
+      --glass-blur: blur(16px);
+      --danger: #ff1744;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: var(--bg);
+      font-family: "Plus Jakarta Sans", sans-serif;
+      color: var(--foreground);
+    }
+
+    /* Globe canvas stays fully integrated */
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* TOP BRANDING BAR */
+    .system-title-wrap {
+      position: absolute;
+      top: 40px;
+      left: 6%;
+      z-index: 20;
+      pointer-events: none;
+      animation: titleFadeIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes titleFadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .system-heading {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #ffffff, var(--accent-2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
+      text-shadow: 0 0 30px rgba(255, 115, 0, 0.25);
+    }
+
+    .system-subheading {
+      margin-top: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* RIGHT SIDE ALIGNED LOGIN BOX */
+    .login-box {
+      position: absolute;
+      top: 50%;
+      right: 6%;
+      transform: translateY(-50%);
+      width: 400px;
+      padding: 44px;
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      border-radius: 24px;
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      z-index: 20;
+      animation: boxFadeIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      transition: border-color 0.3s ease;
+    }
+
+    .login-box:hover {
+      border-color: rgba(255, 115, 0, 0.45);
+    }
+
+    @keyframes boxFadeIn {
+      from { opacity: 0; transform: translate(15px, -50%); }
+      to { opacity: 1; transform: translate(0, -50%); }
+    }
+
+    .login-box h2 {
+      color: var(--accent-2);
+      font-size: 1.7rem;
+      font-weight: 800;
+      margin-bottom: 28px;
+      letter-spacing: -0.5px;
+    }
+
+    /* Floating input groups */
+    .input-group {
+      position: relative;
+      margin-bottom: 22px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 14px 16px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 115, 0, 0.18);
+      border-radius: 10px;
+      color: #ffffff;
+      font-size: 0.95rem;
+      outline: none;
+      font-family: inherit;
+      transition: all 0.25s ease;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .input-group input:focus {
+      border-color: var(--accent-2);
+      box-shadow: 0 0 12px rgba(255, 174, 66, 0.15), inset 0 2px 4px rgba(0,0,0,0.1);
+      background: rgba(0, 0, 0, 0.6);
+    }
+
+    .input-group label {
+      position: absolute;
+      top: 50%;
+      left: 16px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      pointer-events: none;
+      transform: translateY(-50%);
+      transition: all 0.25s ease;
+      padding: 0 4px;
+    }
+
+    .input-group input:focus ~ label,
+    .input-group input:not(:placeholder-shown) ~ label {
+      top: 0;
+      font-size: 0.75rem;
+      color: var(--accent-2);
+      font-weight: 700;
+      background: #090f19;
+      border-radius: 4px;
+      transform: translateY(-50%) scale(0.95);
+    }
+
+    .login-box button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 10px;
+      border-radius: 10px;
+      border: none;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      color: #03060a;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      font-family: inherit;
+      box-shadow: 0 6px 20px var(--accent-glow);
+      transition: all 0.25s ease;
+    }
+
+    .login-box button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 26px rgba(255, 115, 0, 0.75);
+      filter: brightness(1.1);
+    }
+
+    .login-box button:active {
+      transform: translateY(0.5px);
+    }
+
+    .login-box .options {
+      margin-top: 24px;
+      text-align: center;
+      border-top: 1px solid rgba(255, 115, 0, 0.1);
+      padding-top: 18px;
+    }
+
+    .login-box .options a {
+      color: var(--accent-2);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 700;
+      transition: all 0.2s ease;
+    }
+
+    .login-box .options a:hover {
+      color: #ffffff;
+      text-shadow: 0 0 8px rgba(255, 174, 66, 0.4);
+    }
+
+    .error {
+      margin-top: 16px;
+      color: var(--danger);
+      font-size: 0.85rem;
+      font-weight: 700;
+      background: rgba(255, 23, 68, 0.08);
+      border: 1px solid rgba(255, 23, 68, 0.2);
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    @media (max-width: 900px) {
+      .system-title-wrap {
+        left: 5%;
+        top: 20px;
+        width: 90%;
+        text-align: center;
+      }
+      .system-heading { font-size: 1.6rem; }
+      .login-box {
+        left: 5%;
+        right: 5%;
+        width: 90%;
+        max-width: 400px;
+        top: 60%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Title Info -->
+  <div class="system-title-wrap">
+    <div class="system-heading">ABHEDYA — Cyber Defense</div>
+    <div class="system-subheading">AI-Powered Multi-Agent Deception System</div>
+  </div>
+
+  <!-- Login Form Box -->
+  <div class="login-box">
+    <h2>Secure Login</h2>
+
+    <form method="POST" action="/">
+      <div class="input-group">
+        <input type="text" name="username" required placeholder=" " autocomplete="off" />
+        <label>Username</label>
+      </div>
+
+      <div class="input-group">
+        <input type="password" name="password" required placeholder=" " autocomplete="off" />
+        <label>Password</label>
+      </div>
+
+      <button type="submit">Authorize Connection</button>
+
+      {% if error %}
+        <p class="error">{{ error }}</p>
+      {% endif %}
+
+      <div class="options">
+        <a href="{{ url_for('register') }}">Request Access Clearance</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Three.js (Unchanged integration) -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.127.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.127.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://unpkg.com/topojson-client@3"></script>
+
+  <script>
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 2000);
+    camera.position.z = 900;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(width, height);
+    document.body.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableRotate = true;
+    controls.enablePan = false;
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.enableZoom = true;
+    controls.rotateSpeed = 1;
+    camera.position.set(800, 0, 900);
+    controls.target.set(0, 0, 0);
+
+    // Lights
+    scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+    const dirLight = new THREE.DirectionalLight(0xffae42, 0.6);
+    dirLight.position.set(200, 200, 200);
+    scene.add(dirLight);
+
+    // Globe group
+    const globeGroup = new THREE.Group();
+    scene.add(globeGroup);
+
+    const sphereGeometry = new THREE.SphereGeometry(300, 64, 64);
+    const sphereMaterial = new THREE.MeshPhongMaterial({ color: 0x05070a, shininess: 30 });
+    const earth = new THREE.Mesh(sphereGeometry, sphereMaterial);
+    globeGroup.add(earth);
+    globeGroup.position.x = -250;
+
+    // Stars
+    function createStars() {
+      const starGeometry = new THREE.BufferGeometry();
+      const positions = [];
+      for (let i = 0; i < 5000; i++) {
+        const x = (Math.random() - 0.5) * 5000;
+        const y = (Math.random() - 0.5) * 5000;
+        const z = (Math.random() - 0.5) * 5000;
+        positions.push(x, y, z);
+      }
+      starGeometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+      const starMaterial = new THREE.PointsMaterial({ color: 0xffae42, size: 1 });
+      const stars = new THREE.Points(starGeometry, starMaterial);
+      globeGroup.add(stars);
+    }
+    createStars();
+
+    // LatLng converter
+    function latLngToXYZ(lat, lng, radius = 300) {
+      const phi = (90 - lat) * (Math.PI / 180);
+      const theta = (lng + 180) * (Math.PI / 180);
+      return new THREE.Vector3(
+        -radius * Math.sin(phi) * Math.cos(theta),
+        radius * Math.cos(phi),
+        radius * Math.sin(phi) * Math.sin(theta)
+      );
+    }
+
+    // Country borders
+    fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
+      .then(res => res.json())
+      .then(worldData => {
+        const countries = topojson.feature(worldData, worldData.objects.countries).features;
+        const borderMaterial = new THREE.LineBasicMaterial({ color: 0xff7300, linewidth: 1 });
+
+        countries.forEach(country => {
+          const drawRing = ring => {
+            const points = ring.map(([lng, lat]) => latLngToXYZ(lat, lng, 302));
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            globeGroup.add(new THREE.LineLoop(geometry, borderMaterial));
+          };
+          if (country.geometry.type === "Polygon") {
+            country.geometry.coordinates.forEach(drawRing);
+          } else if (country.geometry.type === "MultiPolygon") {
+            country.geometry.coordinates.forEach(polygon => polygon.forEach(drawRing));
+          }
+        });
+      });
+
+    // Hubs
+    const hubs = [
+      { lat: 12.97, lng: 77.59 }, // Bangalore
+      { lat: 28.61, lng: 77.20 }, // Delhi
+      { lat: 35.68, lng: 139.69 }, // Tokyo
+      { lat: 31.23, lng: 121.47 }, // Shanghai
+      { lat: 39.90, lng: 116.40 }, // Beijing
+      { lat: 37.56, lng: 126.97 }, // Seoul
+      { lat: 1.29, lng: 103.85 }, // Singapore
+      { lat: 13.08, lng: 80.27 }, // Chennai
+      { lat: 51.50, lng: -0.12 }, // London
+      { lat: 52.52, lng: 13.40 }, // Berlin
+      { lat: 48.85, lng: 2.35 }, // Paris
+      { lat: 41.90, lng: 12.49 }, // Rome
+      { lat: 55.75, lng: 37.61 }, // Moscow
+      { lat: 40.41, lng: -3.70 }, // Madrid
+      { lat: 50.11, lng: 8.68 },  // Frankfurt
+      { lat: 40.71, lng: -74.01 }, // New York
+      { lat: 34.05, lng: -118.24 }, // Los Angeles
+      { lat: 41.87, lng: -87.62 }, // Chicago
+      { lat: 29.76, lng: -95.36 }, // Houston
+      { lat: 45.42, lng: -75.69 }, // Ottawa
+      { lat: 19.43, lng: -99.13 }, // Mexico City
+      { lat: -23.55, lng: -46.63 }, // São Paulo
+      { lat: -34.60, lng: -58.38 }, // Buenos Aires
+      { lat: -12.05, lng: -77.04 }, // Lima
+      { lat: -33.45, lng: -70.66 }, // Santiago
+      { lat: 30.04, lng: 31.23 }, // Cairo
+      { lat: -1.29, lng: 36.82 }, // Nairobi
+      { lat: 6.52, lng: 3.37 }, // Lagos
+      { lat: -26.20, lng: 28.04 }, // Johannesburg
+      { lat: 25.27, lng: 55.30 }, // Dubai
+      { lat: 33.31, lng: 44.36 }, // Baghdad
+      { lat: 31.95, lng: 35.91 }, // Amman
+      { lat: 32.09, lng: 34.78 }, // Tel Aviv
+      { lat: -33.86, lng: 151.20 }, // Sydney
+      { lat: -37.81, lng: 144.96 }, // Melbourne
+      { lat: -36.85, lng: 174.76 }, // Auckland
+    ];
+
+    const routes = [];
+    for (let i = 0; i < 100; i++) {
+      const from = hubs[Math.floor(Math.random() * hubs.length)];
+      const to = hubs[Math.floor(Math.random() * hubs.length)];
+      if (from !== to) routes.push([from, to]);
+    }
+    const arcMaterial = new THREE.LineBasicMaterial({ color: 0xffae42, linewidth: 1 });
+
+    routes.forEach(([from, to]) => {
+      const start = latLngToXYZ(from.lat, from.lng);
+      const end = latLngToXYZ(to.lat, to.lng);
+      const mid = start.clone().add(end).multiplyScalar(0.5);
+      mid.normalize().multiplyScalar(380);
+      const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
+      const points = curve.getPoints(100);
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      globeGroup.add(new THREE.Line(geometry, arcMaterial));
+
+      // Bees
+      for (let i = 0; i < 2; i++) {
+        const bee = makeBeeMesh();
+        globeGroup.add(bee);
+        let t = Math.random();
+        function moveBee() {
+          t += 0.001; if (t > 1) t = 0;
+          bee.position.copy(curve.getPoint(t));
+          requestAnimationFrame(moveBee);
+        }
+        moveBee();
+      }
+    });
+
+    function makeBeeMesh() {
+      const group = new THREE.Group();
+      const bodyGeom = new THREE.CylinderGeometry(2.5, 2.5, 6, 8);
+      const bodyMat = new THREE.MeshBasicMaterial({ color: 0xffae42 });
+      const body = new THREE.Mesh(bodyGeom, bodyMat);
+      body.rotation.z = Math.PI / 2;
+      group.add(body);
+
+      const capGeom = new THREE.SphereGeometry(2.5, 8, 8);
+      const capMat = new THREE.MeshBasicMaterial({ color: 0xffae42 });
+      const cap1 = new THREE.Mesh(capGeom, capMat); cap1.position.x = -3;
+      const cap2 = cap1.clone(); cap2.position.x = 3;
+      group.add(cap1); group.add(cap2);
+
+      const stripeGeom = new THREE.CylinderGeometry(2.2, 2.2, 1, 8);
+      const stripeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+      const stripe = new THREE.Mesh(stripeGeom, stripeMat);
+      stripe.rotation.z = Math.PI / 2;
+      group.add(stripe);
+
+      const wingGeom = new THREE.PlaneGeometry(6, 2);
+      const wingMat = new THREE.MeshBasicMaterial({ color: 0xfff3d1, side: THREE.DoubleSide, transparent: true, opacity: 0.6 });
+      const leftWing = new THREE.Mesh(wingGeom, wingMat); leftWing.position.set(-2, 2.5, 0);
+      const rightWing = leftWing.clone(); rightWing.position.x = 2;
+      group.add(leftWing); group.add(rightWing);
+
+      return group;
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      globeGroup.rotation.y += 0.0025;
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>

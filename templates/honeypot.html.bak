@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+
+{% block title %}ABHEDYA — Intelligence Assets{% endblock %}
+
+{% block header_actions %}
+  <a href="/" class="btn-secondary">
+    ← Dashboard
+  </a>
+{% endblock %}
+
+{% block content %}
+<style>
+  .intel-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 115, 0, 0.1);
+  }
+
+  .intel-title-group h1 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.5px;
+  }
+
+  .intel-title-group .subtitle {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Search bar design */
+  .intel-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(8, 12, 20, 0.6);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 4px 6px;
+    transition: all 0.3s ease;
+  }
+
+  .intel-search:focus-within {
+    border-color: var(--accent-2);
+    box-shadow: 0 0 12px rgba(255, 174, 66, 0.15);
+  }
+
+  .intel-search input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    padding: 8px 12px;
+    width: 240px;
+    font-family: inherit;
+    font-size: 0.9rem;
+  }
+
+  .intel-search input::placeholder {
+    color: #5d6d85;
+  }
+
+  .intel-search button {
+    border: 1px solid rgba(255, 115, 0, 0.25);
+    background: rgba(255, 115, 0, 0.05);
+    color: var(--accent-2);
+    font-weight: 700;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s ease;
+  }
+
+  .intel-search button:hover {
+    background: rgba(255, 115, 0, 0.12);
+    border-color: var(--accent-2);
+  }
+
+  /* Table highlights */
+  tr.sus-high {
+    background: rgba(255, 23, 68, 0.05) !important;
+  }
+  tr.sus-high:hover td {
+    background: rgba(255, 23, 68, 0.09) !important;
+  }
+
+  /* Badges */
+  .threat-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-align: center;
+  }
+
+  .threat-high {
+    background: rgba(255, 23, 68, 0.15);
+    color: #ff1744;
+    border: 1px solid rgba(255, 23, 68, 0.3);
+  }
+
+  .threat-mid {
+    background: rgba(255, 179, 0, 0.15);
+    color: #ffb300;
+    border: 1px solid rgba(255, 179, 0, 0.3);
+  }
+
+  .threat-low {
+    background: rgba(0, 230, 118, 0.1);
+    color: #00e676;
+    border: 1px solid rgba(0, 230, 118, 0.2);
+  }
+
+  .btn-view {
+    background: rgba(255, 115, 0, 0.1);
+    border: 1px solid rgba(255, 115, 0, 0.25);
+    color: var(--accent-2);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+  }
+
+  .btn-view:hover {
+    background: var(--accent);
+    color: #03060a;
+    border-color: var(--accent);
+    box-shadow: 0 0 10px rgba(255, 115, 0, 0.3);
+  }
+
+  .load-more-btn {
+    display: block;
+    text-align: center;
+    padding: 12px;
+    margin-top: 16px;
+    color: var(--accent-2);
+    text-decoration: none;
+    font-weight: 700;
+    border: 1px dashed var(--panel-border);
+    border-radius: 10px;
+    transition: all 0.2s ease;
+  }
+
+  .load-more-btn:hover {
+    background: rgba(255, 115, 0, 0.05);
+    border-color: var(--accent-2);
+  }
+</style>
+
+<div class="intel-controls">
+  <div class="intel-title-group">
+    <h1>Intelligence Database</h1>
+    <div class="subtitle">
+      Restricted / Sanitized Decoy View
+    </div>
+  </div>
+
+  <div class="intel-search">
+    <input
+      id="honeypot-search"
+      type="text"
+      placeholder="Search assets..."
+      autocomplete="off"
+    />
+    <button id="honeypot-clear">Clear</button>
+  </div>
+</div>
+
+<table id="intel-table" class="display" style="width:100%">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Asset</th>
+      <th>Codename</th>
+      <th>Affinity</th>
+      <th>Threat</th>
+      <th>Status</th>
+      <th>Last Known</th>
+      <th>Priority</th>
+      <th>Extract</th>
+      <th>Reliability</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    {% set is_sus = r['threat_level'] and r['threat_level']|int >= 8 %}
+    <tr class="{{ 'sus-high' if is_sus }}">
+      <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.82rem;">{{ r['id'] }}</td>
+      <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent-2);">{{ r['asset_id'] }}</td>
+      <td style="font-weight: 700;">{{ r['codename'] }}</td>
+      <td>{{ r['affiliation'] }}</td>
+      <td>
+        {% if r['threat_level']|int >= 8 %}
+          <span class="threat-badge threat-high">HIGH ({{ r['threat_level'] }})</span>
+        {% elif r['threat_level']|int >= 4 %}
+          <span class="threat-badge threat-mid">MID ({{ r['threat_level'] }})</span>
+        {% else %}
+          <span class="threat-badge threat-low">LOW ({{ r['threat_level'] }})</span>
+        {% endif %}
+      </td>
+      <td>
+        <span style="display:inline-flex; align-items:center; gap:6px;">
+          <span style="width:6px; height:6px; border-radius:50%; background:{{ '#00e676' if r['status'] == 'active' else '#8b9bb0' }}"></span>
+          {{ r['status'] }}
+        </span>
+      </td>
+      <td>{{ r['last_known_location'] }}</td>
+      <td>
+        <span style="color: {{ '#ff1744' if r['mission_priority'] == 'High' else '#ffb300' if r['mission_priority'] == 'Medium' else '#8b9bb0' }}; font-weight: 700;">
+          {{ r['mission_priority'] }}
+        </span>
+      </td>
+      <td>
+        <span style="font-weight: 700; color: {{ '#00e676' if r['extraction_needed'] == 1 else '#5d6d85' }}">
+          {{ 'YES' if r['extraction_needed'] == 1 else 'NO' }}
+        </span>
+      </td>
+      <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700;">{{ r['reliability_score'] }}</td>
+      <td>
+        <button class="btn-view detail-btn" data-index="{{ loop.index0 }}">View Profile</button>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<a href="/honeypot_db?sid={{ sid }}&page={{ next_page }}" class="load-more-btn">
+  Load Next Telemetry Page
+</a>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+
+<script>
+/* Decoy database row-level scrambler (scrambles values column-wise to prevent real leak) */
+const REAL_ROWS = {{ rows | tojson | safe }};
+
+function shuffle(a){
+  const arr = a.slice();
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+
+function scrambleRows(rows){
+  if(!rows.length) return rows;
+  const keys = Object.keys(rows[0]).filter(k=>k!=="codename");
+  const pools={};
+  keys.forEach(k=>pools[k]=shuffle(rows.map(r=>r[k])));
+  return rows.map((r,i)=>{
+    const o={...r};
+    keys.forEach(k=>o[k]=pools[k][i]);
+    return o;
+  });
+}
+
+let HONEYPOT_ROWS = null;
+
+function getHoneypotRows() {
+  if (HONEYPOT_ROWS) return HONEYPOT_ROWS;
+  HONEYPOT_ROWS = scrambleRows(JSON.parse(JSON.stringify(REAL_ROWS)));
+  return HONEYPOT_ROWS;
+}
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  document.querySelectorAll(".detail-btn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const i = parseInt(btn.dataset.index);
+      const rowData = getHoneypotRows()[i];
+      
+      var html = '<div style="display:flex; flex-direction:column; gap:12px;">';
+      html += '<div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.03); padding-bottom:8px;"><span>Record ID</span><span style="font-family:\'JetBrains Mono\',monospace; font-weight:700;">' + (rowData.id || '') + '</span></div>';
+      html += '<div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.03); padding-bottom:8px;"><span>Asset Reference</span><span style="font-family:\'JetBrains Mono\',monospace; font-weight:700; color:var(--accent-2);">' + (rowData.asset_id || '') + '</span></div>';
+      html += '<div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.03); padding-bottom:8px;"><span>Codename</span><span style="font-weight:700;">' + (rowData.codename || '') + '</span></div>';
+      html += '<div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.03); padding-bottom:8px;"><span>Affiliation</span><span>' + (rowData.affiliation || '') + '</span></div>';
+      html += '<div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.03); padding-bottom:8px;"><span>Threat Rating</span><span>' + (rowData.threat_level || '0') + '/10</span></div>';
+      html += '<div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.03); padding-bottom:8px;"><span>Operational Status</span><span>' + (rowData.status || '') + '</span></div>';
+      html += '<div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.03); padding-bottom:8px;"><span>Coordinates</span><span>' + (rowData.last_known_location || '') + '</span></div>';
+      html += '</div>';
+      html += '<div style="margin-top:20px; border-top:1px solid rgba(255,115,0,0.15); padding-top:14px;">';
+      html += '<span style="color:var(--muted); font-size:0.8rem; font-weight:700; text-transform:uppercase; display:block; margin-bottom:8px;">Sanitized Decoy Schema</span>';
+      html += '<pre style="font-family:\'JetBrains Mono\',monospace; font-size:0.75rem; background:rgba(0,0,0,0.4); color:#a0b0c0; padding:10px; border-radius:8px; overflow:auto; max-height:200px; border:1px solid rgba(255,255,255,0.03);">' + JSON.stringify(rowData, null, 2) + '</pre>';
+      html += '</div>';
+      
+      window.openIntelDrawer("Decoy Asset — " + (rowData.codename || 'Details'), html);
+    });
+  });
+  
+  const searchInput = document.getElementById("honeypot-search");
+  const clearBtn = document.getElementById("honeypot-clear");
+  const table = document.getElementById("intel-table");
+  const tbody = table.querySelector("tbody");
+
+  function applySearch() {
+    const q = searchInput.value.toLowerCase().trim();
+    let visible = 0;
+
+    tbody.querySelectorAll("tr").forEach(row => {
+      const text = row.innerText.toLowerCase();
+      if (!q || text.includes(q)) {
+        row.style.display = "";
+        visible++;
+      } else {
+        row.style.display = "none";
+      }
+    });
+  }
+
+  searchInput.addEventListener("input", applySearch);
+  clearBtn.addEventListener("click", ()=>{
+    searchInput.value = "";
+    applySearch();
+  });
+});
+</script>
+{% endblock %}

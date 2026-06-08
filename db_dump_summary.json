@@ -1,0 +1,104 @@
+{
+  "tables": {
+    "traffic_log": {
+      "columns": [
+        "id",
+        "src_ip",
+        "dst_ip",
+        "protocol",
+        "packet_size",
+        "timestamp"
+      ],
+      "rows_count": 1
+    },
+    "detections": {
+      "columns": [
+        "id",
+        "traffic_id",
+        "model_used",
+        "prediction",
+        "confidence",
+        "timestamp"
+      ],
+      "rows_count": 1
+    },
+    "responses": {
+      "columns": [
+        "id",
+        "detection_id",
+        "action",
+        "status",
+        "timestamp"
+      ],
+      "rows_count": 1
+    },
+    "login_log": {
+      "columns": [
+        "id",
+        "user_id",
+        "login_time",
+        "ip_address",
+        "status"
+      ],
+      "rows_count": 20118
+    },
+    "users": {
+      "columns": [
+        "id",
+        "username",
+        "password",
+        "role",
+        "last_login",
+        "failed_attempts",
+        "locked_until"
+      ],
+      "rows_count": 3
+    },
+    "registration_requests": {
+      "columns": [
+        "id",
+        "full_name",
+        "department",
+        "remarks",
+        "status",
+        "request_time"
+      ],
+      "rows_count": 5
+    },
+    "login_log_stream": {
+      "columns": [
+        "id",
+        "username",
+        "ip_address",
+        "event",
+        "timestamp"
+      ],
+      "rows_count": 34010
+    },
+    "admins": {
+      "columns": [
+        "id",
+        "username",
+        "password",
+        "full_name",
+        "last_login"
+      ],
+      "rows_count": 1
+    },
+    "captures": {
+      "columns": [
+        "id",
+        "capture_id",
+        "requested_by",
+        "iface",
+        "bpf_filter",
+        "filename",
+        "started_at",
+        "stopped_at",
+        "status",
+        "notes"
+      ],
+      "rows_count": 0
+    }
+  }
+}

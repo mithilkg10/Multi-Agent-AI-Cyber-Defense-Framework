@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+
+{% block title %}ABHEDYA — Blocklist Management{% endblock %}
+
+{% block header_actions %}
+  <a href="{{ url_for('admin_dashboard') }}" class="btn-secondary">
+    ← Dashboard
+  </a>
+{% endblock %}
+
+{% block content %}
+<style>
+  .block-container {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .block-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 115, 0, 0.1);
+  }
+
+  .block-header h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.5px;
+  }
+
+  .block-header .subtext {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Search styling */
+  .search-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(8, 12, 20, 0.6);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 4px 6px;
+  }
+
+  .search-container input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    padding: 8px 12px;
+    width: 260px;
+    font-family: inherit;
+    font-size: 0.9rem;
+  }
+
+  .search-container input::placeholder {
+    color: #5d6d85;
+  }
+
+  .search-container button {
+    border: 1px solid rgba(255, 115, 0, 0.25);
+    background: rgba(255, 115, 0, 0.05);
+    color: var(--accent-2);
+    font-weight: 700;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s ease;
+  }
+
+  .search-container button:hover {
+    background: rgba(255, 115, 0, 0.12);
+    border-color: var(--accent-2);
+  }
+
+  /* Table highlights */
+  table.display tbody tr td:first-child {
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 700;
+    color: var(--accent-2);
+  }
+
+  .reason-tag {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: #e2e8f0;
+  }
+
+  .date-col {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+
+  /* Unblock button styling */
+  .btn-unblock {
+    background: linear-gradient(90deg, #ff1744, #ff5252);
+    color: #ffffff;
+    border: none;
+    font-weight: 700;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.8rem;
+    box-shadow: 0 4px 12px rgba(255, 23, 68, 0.25);
+    transition: all 0.2s ease;
+  }
+
+  .btn-unblock:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(255, 23, 68, 0.45);
+    filter: brightness(1.1);
+  }
+
+  .btn-unblock:disabled {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--muted);
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Custom toast message overlay */
+  .toast-popup {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    background: rgba(10, 15, 24, 0.95);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    z-index: 10100;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transform: translateY(150%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    backdrop-filter: blur(12px);
+  }
+
+  .toast-popup.active {
+    transform: translateY(0);
+  }
+
+  .toast-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .toast-success .toast-indicator { background: var(--success); box-shadow: 0 0 10px var(--success); }
+  .toast-error .toast-indicator { background: var(--danger); box-shadow: 0 0 10px var(--danger); }
+  .toast-message { font-size: 0.9rem; font-weight: 600; }
+  
+  .no-data-msg {
+    text-align: center;
+    color: var(--muted);
+    padding: 40px 0;
+    font-weight: 500;
+  }
+</style>
+
+<div class="block-container">
+  <div class="block-header">
+    <div>
+      <h2>Active Blocklist</h2>
+      <div class="subtext">
+        System firewall rules blocking malicious nodes. Authenticated administrators can bypass or revoke blocks.
+      </div>
+    </div>
+
+    <div class="search-container">
+      <input id="blocklist-search" placeholder="Search IP address..." autocomplete="off" />
+      <button id="clear-search">Clear</button>
+    </div>
+  </div>
+
+  <table id="blocklist-table" class="display" style="width:100%">
+    <thead>
+      <tr>
+        <th>Target IP</th>
+        <th>Violation Reason</th>
+        <th>Blocked Timestamp</th>
+        <th>Expiration Time</th>
+        <th>Mitigation Control</th>
+      </tr>
+    </thead>
+    <tbody id="blocklist-body">
+      {% for r in rows %}
+      <tr data-ip="{{ r['ip'] }}">
+        <td>{{ r['ip'] }}</td>
+        <td>
+          <span class="reason-tag">
+            {{ r['reason'] or 'Auto rate limit triggered' }}
+          </span>
+        </td>
+        <td class="date-col">{{ r['created_at'] }}</td>
+        <td class="date-col" style="color: {{ 'var(--accent)' if r['expires_at'] else 'var(--muted)' }}">
+          {{ r['expires_at'] or 'Permanent / Manual block' }}
+        </td>
+        <td>
+          <button class="btn-unblock unblock-btn" data-ip="{{ r['ip'] }}">
+            Revoke Block
+          </button>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="5">
+          <div class="no-data-msg">No active firewall blocks recorded. System clear.</div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Custom toast popup element -->
+<div id="custom-toast" class="toast-popup" aria-live="polite">
+  <div class="toast-indicator"></div>
+  <div class="toast-message" id="toast-text"></div>
+</div>
+
+<script>
+function showToast(message, type="success", duration=3000) {
+  const toast = document.getElementById('custom-toast');
+  const textEl = document.getElementById('toast-text');
+  
+  toast.className = 'toast-popup ' + (type === 'error' ? 'toast-error' : 'toast-success');
+  textEl.textContent = message;
+  toast.classList.add('active');
+  
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => {
+    toast.classList.remove('active');
+  }, duration);
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+  const searchInput = document.getElementById('blocklist-search');
+  const tbody = document.getElementById('blocklist-body');
+  const clearBtn = document.getElementById('clear-search');
+
+  // Local filter
+  searchInput.addEventListener('input', function(){
+    const query = this.value.trim().toLowerCase();
+    const rows = tbody.querySelectorAll('tr[data-ip]');
+    let matchesCount = 0;
+    
+    rows.forEach(row => {
+      const ip = row.dataset.ip.toLowerCase();
+      if (!query || ip.includes(query)) {
+        row.style.display = '';
+        matchesCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    const noDataRow = tbody.querySelector('.no-matching-row');
+    if (matchesCount === 0 && rows.length > 0) {
+      if (!noDataRow) {
+        const tr = document.createElement('tr');
+        tr.className = 'no-matching-row';
+        tr.innerHTML = '<td colspan="5"><div class="no-data-msg">No matching blocked IP configurations.</div></td>';
+        tbody.appendChild(tr);
+      }
+    } else if (noDataRow) {
+      noDataRow.remove();
+    }
+  });
+
+  clearBtn.addEventListener('click', function(){
+    searchInput.value = '';
+    searchInput.dispatchEvent(new Event('input'));
+  });
+
+  // Action execution using delegation
+  tbody.addEventListener('click', function(e){
+    const btn = e.target.closest('.unblock-btn');
+    if (!btn) return;
+    
+    const ip = btn.dataset.ip;
+    if (!ip) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Revoking...';
+
+    fetch('/admin/unblock', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: 'ip=' + encodeURIComponent(ip)
+    })
+    .then(async (res) => {
+      let data;
+      try { data = await res.json(); } catch(err) { data = { error: 'Malformed JSON payload' }; }
+      
+      if (res.ok && data && data.status === 'unblocked') {
+        const row = tbody.querySelector('tr[data-ip="' + ip + '"]');
+        if (row) {
+          row.style.opacity = '0';
+          row.style.transition = 'opacity 0.25s ease';
+          setTimeout(() => {
+            row.remove();
+            // Check if table empty
+            if (tbody.querySelectorAll('tr[data-ip]').length === 0) {
+              tbody.innerHTML = '<tr><td colspan="5"><div class="no-data-msg">No active firewall blocks recorded. System clear.</div></td></tr>';
+            }
+          }, 250);
+        }
+        showToast('IP Rule Revoked: ' + ip + ' traffic enabled.', 'success');
+      } else {
+        const errorMsg = (data && data.error) ? data.error : 'Mitigation rule revocation failed';
+        showToast(errorMsg, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Revoke Block';
+      }
+    })
+    .catch((err) => {
+      showToast('Network error: ' + err, 'error');
+      btn.disabled = false;
+      btn.textContent = 'Revoke Block';
+    });
+  });
+});
+</script>
+{% endblock %}

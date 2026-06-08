@@ -1,0 +1,14 @@
+venv/
+__pycache__/
+*.pyc
+*.pkl
+*.h5
+.env
+.DS_Store
+.idea/
+.vscode/
+*.db
+*.db-wal
+*.db-shm
+*.sqbpro
+*.csv

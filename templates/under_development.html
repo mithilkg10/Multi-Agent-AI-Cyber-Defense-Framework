@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ABHEDYA — Under Development</title>
+
+<!-- Chart.js (small progress charts if you want later) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+  :root{
+    --bg-1: #071018;
+    --bg-2: #0b1722;
+    --panel: #0f1316;
+    --accent: #ff7a29;
+    --accent-2: #ff9a52;
+    --muted: #9fb1bf;
+    --glass: rgba(255,255,255,0.03);
+    --success: #2aa95b;
+    --danger: #e84b4b;
+    --card-radius: 12px;
+    --shadow: 0 10px 30px rgba(0,0,0,0.6);
+    font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+  }
+
+  html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:#e6eef6}
+  .page{min-height:100vh;display:flex;flex-direction:column}
+  header{position:relative;padding:18px 28px;background:transparent;display:flex;align-items:center;gap:14px;z-index:5}
+  .logo{display:flex;align-items:center;gap:10px}
+  .logo svg{width:64px;height:64px;filter:drop-shadow(0 10px 24px rgba(255,120,40,0.08))}
+  .brand{font-weight:800;color:var(--accent);font-size:18px}
+  .subtitle{color:var(--muted);font-size:13px;margin-top:2px}
+
+  main{flex:1;display:grid;grid-template-columns:360px 1fr;gap:20px;padding:18px;position:relative;z-index:4}
+  .left, .right{background:linear-gradient(180deg,var(--panel), rgba(255,255,255,0.02));border-radius:var(--card-radius);padding:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.03)}
+  .left{min-height:420px}
+  .right{min-height:420px}
+
+  /* honeycomb accent top-left */
+  .hero{
+    display:flex;align-items:center;gap:18px;padding:18px;border-radius:12px;background:linear-gradient(90deg, rgba(255,120,40,0.04), transparent);
+    margin-bottom:12px;
+  }
+  .hero h1{margin:0;font-size:20px;color:var(--accent)}
+  .hero p{margin:0;color:var(--muted);font-size:13px}
+
+  .section-title{color:var(--muted);font-weight:800;font-size:13px;margin-bottom:8px}
+  .feature-grid{display:flex;flex-direction:column;gap:10px}
+  .feature{
+    display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.02)
+  }
+  .feature .meta{display:flex;flex-direction:column}
+  .feature .meta .name{font-weight:700}
+  .feature .meta .desc{font-size:12px;color:var(--muted)}
+  .feature .controls{display:flex;gap:8px;align-items:center}
+
+  /* badge styles */
+  .badge{padding:6px 10px;border-radius:999px;font-weight:800;color:#050505; font-size:13px}
+  .badge.live{background:var(--success)}
+  .badge.dev{background:var(--accent)}
+  .badge.off{background:rgba(255,255,255,0.06);color:var(--muted)}
+
+  /* progress */
+  .prog-wrap{margin-top:10px}
+  .prog{height:10px;background:rgba(255,255,255,0.03);border-radius:999px;overflow:hidden}
+  .prog > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));width:0%}
+
+  /* big right content */
+  .panel-title{display:flex;justify-content:space-between;align-items:center}
+  .roadmap{display:flex;flex-direction:column;gap:14px;margin-top:12px}
+  .mile{display:flex;gap:12px;align-items:flex-start}
+  .mile .dot{width:12px;height:12px;border-radius:999px;background:rgba(255,255,255,0.06);display:inline-block;margin-top:6px}
+  .mile.done .dot{background:var(--success)}
+  .mile.inprogress .dot{background:var(--accent)}
+  .mile .content{flex:1}
+  .mile .title{font-weight:800}
+  .mile .desc{font-size:13px;color:var(--muted);margin-top:6px}
+  .controls{display:flex;gap:10px;align-items:center;margin-top:16px}
+
+  footer{padding:12px 18px;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;align-items:center;z-index:6}
+  a.link{color:var(--accent);font-weight:700;text-decoration:none}
+
+  /* small table */
+  table.small{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
+  table.small th, table.small td{padding:8px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--muted)}
+
+  /* tooltip */
+  .hint{font-size:12px;color:var(--muted)}
+  .muted{color:var(--muted)}
+  @media (max-width:900px){
+    main{grid-template-columns:1fr; padding:12px}
+    .left{order:2}
+    .right{order:1}
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="logo" title="ABHEDYA">
+        <!-- simple shield logo -->
+        <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="gA" x1="0" x2="1"><stop offset="0" stop-color="#ff7a29"/><stop offset="1" stop-color="#ff9a52"/></linearGradient>
+          </defs>
+          <path d="M32 3 L56 12 L56 30 C56 46 44 57 32 61 C20 57 8 46 8 30 L8 12 Z" fill="url(#gA)"/>
+        </svg>
+        <div>
+          <div class="brand">ABHEDYA</div>
+          <div class="subtitle">Adaptive AI Cyber Defense — Under development</div>
+        </div>
+      </div>
+
+      <!-- quick right controls -->
+      <div style="margin-left:auto;display:flex;gap:12px;align-items:center">
+        <a class="link" href="/mnt/data/dashboard.html" target="_blank">Open current dashboard (ref)</a>
+      </div>
+    </header>
+
+    <main>
+      <!-- LEFT column: features + progress -->
+      <div class="left">
+        <div class="hero">
+          <div>
+            <h1>Being Developed</h1>
+            <p class="muted">Current readiness snapshot — tasks completed vs remaining.</p>
+          </div>
+        </div>
+
+        <div class="section-title">Feature status</div>
+        <div class="feature-grid">
+          <!-- each feature entry -->
+          <div class="feature" data-feature="login">
+            <div class="meta">
+              <div class="name">User Login</div>
+              <div class="desc">Auth, session, and basic login flow.</div>
+            </div>
+            <div class="controls">
+              <span class="badge live">LIVE</span>
+            </div>
+          </div>
+
+          <div class="feature" data-feature="dashboard">
+            <div class="meta">
+              <div class="name">Admin Dashboard</div>
+              <div class="desc">Real-time charts, tables, and admin JSON endpoints.</div>
+            </div>
+            <div class="controls">
+              <span class="badge live">LIVE</span>
+            </div>
+          </div>
+
+          <div class="feature" data-feature="predict_ui">
+            <div class="meta">
+              <div class="name">Threat Predictor UI</div>
+              <div class="desc">Interactive /predict UI — single packet testing.</div>
+            </div>
+            <div class="controls">
+              <span class="badge live">LIVE</span>
+            </div>
+          </div>
+
+          <div class="feature" data-feature="honeypot">
+            <div class="meta">
+              <div class="name">Honeypot App</div>
+              <div class="desc">Corneya fake dashboard & capture service (port 5001).</div>
+            </div>
+            <div class="controls">
+              <span class="badge live">LIVE</span>
+            </div>
+          </div>
+
+          <div class="feature" data-feature="kafka">
+            <div class="meta">
+              <div class="name">Kafka Stream</div>
+              <div class="desc">Producer/consumer for login events & ML outputs.</div>
+            </div>
+            <div class="controls">
+              <span class="badge live">LIVE</span>
+            </div>
+          </div>
+
+          <div class="feature" data-feature="rl">
+            <div class="meta">
+              <div class="name">RL Decision (DQN)</div>
+              <div class="desc">Automated action selection (Allow/Block/Redirect).</div>
+            </div>
+            <div class="controls">
+              <span class="badge live">LIVE</span>
+            </div>
+          </div>
+
+          <div class="feature" data-feature="blocklist">
+            <div class="meta">
+              <div class="name">Blocklist Manager</div>
+              <div class="desc">Add/remove blocked IPs from admin UI.</div>
+            </div>
+            <div class="controls">
+              <span class="badge live">LIVE</span>
+            </div>
+          </div>
+
+          <div class="feature" data-feature="retrain">
+            <div class="meta">
+              <div class="name">Adaptive Retraining</div>
+              <div class="desc">Feed honeypot logs into retraining pipeline.</div>
+            </div>
+            <div class="controls">
+              <span class="badge off">PLANNED</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:14px">
+          <div class="section-title">Overall progress</div>
+          <div class="prog-wrap">
+            <div class="small muted">Completed: <strong id="percentText">80%</strong></div>
+            <div class="prog" aria-hidden="true"><i id="progBar" style="width:80%"></i></div>
+            <div class="muted" style="margin-top:8px;font-size:13px">
+              Completed stages: Objective 1 (Real-time hybrid ML detection), Objective 2 (DQN decision engine), Objective 3 (Honeypot deception), core dashboard and integrations.
+              Remaining: Objective 4 (Adaptive retraining loop), frontend polish and final testing & deployment.
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick actions removed as requested -->
+      </div>
+
+      <!-- RIGHT column: roadmap / explanation -->
+      <div class="right">
+        <div class="panel-title">
+          <div>
+            <div class="section-title">Roadmap & Next Steps</div>
+            <div style="font-size:16px;font-weight:800">Milestones & Timeline</div>
+          </div>
+          <!-- removed ETA line as requested -->
+        </div>
+
+        <div class="roadmap" id="roadmap">
+          <div class="mile done" id="mile1">
+            <div class="dot"></div>
+            <div class="content">
+              <div class="title">Objective 1 — Completed</div>
+              <div class="desc">Implemented a real-time anomaly detection pipeline using hybrid ML: XGBoost (tabular features) + CNN-LSTM (temporal patterns), integrated into the ingestion flow.</div>
+            </div>
+          </div>
+
+          <div class="mile done" id="mile2">
+            <div class="dot"></div>
+            <div class="content">
+              <div class="title">Objective 2 — Completed</div>
+              <div class="desc">Developed and integrated the DQN-based decision engine that maps anomaly scores and context to actions (Allow / Watch / Block / Redirect).</div>
+            </div>
+          </div>
+
+          <div class="mile done" id="mile3">
+            <div class="dot"></div>
+            <div class="content">
+              <div class="title">Objective 3 — Completed</div>
+              <div class="desc">Deployed adaptive deception layer (honeypot) on a separate service; honeypot logs attacker behaviour and provides labeled samples for analysis.</div>
+            </div>
+          </div>
+
+          <div class="mile inprogress" id="mile4">
+            <div class="dot"></div>
+            <div class="content">
+              <div class="title">Objective 4 — In progress (Primary remaining)</div>
+              <div class="desc">Build safe continuous learning loop that periodically retrains ML and RL models using validated honeypot captures. Tasks: data curation, validation gates, training pipeline, and canary rollout.</div>
+            </div>
+          </div>
+
+          <div class="mile" id="mile5">
+            <div class="dot"></div>
+            <div class="content">
+              <div class="title">Frontend polish & UX improvements</div>
+              <div class="desc">Polish dashboard visual elements, fix UI routing, ensure responsive layout, and improve clarity on threat action (BLOCK / REDIRECT / WATCH).</div>
+            </div>
+          </div>
+
+          <div class="mile" id="mile6">
+            <div class="dot"></div>
+            <div class="content">
+              <div class="title">Testing & Deployment</div>
+              <div class="desc">Complete end-to-end testing (integration, performance), package the services, and deploy (CI/CD and hardening). Ensure monitoring & rollback strategy for model updates.</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:14px">
+          <div class="section-title">Notes for evaluators</div>
+          <ul style="color:var(--muted);line-height:1.6">
+            <li>Objectives 1–3 are implemented and validated on a local VM/testbed.</li>
+            <li>Remaining work focuses on Objective 4 (retraining loop), frontend polish and final testing/deployment.</li>
+            <li>Kafka and blocklist management are live and wired into the pipeline (events and block actions flow correctly).</li>
+          </ul>
+        </div>
+
+        <div style="margin-top:14px">
+          <div class="section-title">Developer docs & references</div>
+          <table class="small">
+            <thead><tr><th>File</th><th>Purpose</th></tr></thead>
+            <tbody>
+              <tr><td>/mnt/data/app.py</td><td>Main backend, routes, ML & RL glue</td></tr>
+              <tr><td>/mnt/data/honeypot_app.py</td><td>Honeypot service (port 5001)</td></tr>
+              <tr><td>/mnt/data/dashboard.html</td><td>Admin UI (reference)</td></tr>
+              <tr><td>/mnt/data/pyshark_to_predict.py</td><td>Packet capture → /predict helper</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </main>
+
+    <footer>
+      <div>Prepared for Interim Demo — ABHEDYA</div>
+      <div>Need quick help? <a class="link" href="mailto:you@domain.com">you@domain.com</a></div>
+    </footer>
+  </div>
+
+<script>
+  // dynamic marking: ensure badges reflect live status where required.
+  (function markDone(){
+    // ensure feature badges match the DOM state we set in HTML (no action required)
+  })();
+</script>
+</body>
+</html>
+
+<script>
+  // small runtime: route buttons to existing UIs or show not-routed notice
+  document.getElementById('btnOpenDashboard').addEventListener('click', function(){
+    // attempt to open local dashboard reference file (project copy)
+    window.open('/mnt/data/dashboard.html', '_blank');
+  });
+
+  document.getElementById('btnOpenPredict').addEventListener('click', function(){
+    // if predict_ui exists, open, otherwise show warning
+    fetch('/predict_ui').then(r=>{
+      if(r.ok) window.open('/predict_ui','_blank');
+      else alert('Predict UI not routed yet (404).');
+    }).catch(e=>{
+      alert('Predict UI not routed yet.');
+    });
+  });
+
+  document.getElementById('btnStartSeeder').addEventListener('click', function(){
+    // front-end cannot start server tasks; show instructions
+    alert('To start the demo seeder, run:\n\npython /mnt/data/demo_seed_login_log.py 5\n\n(See project folder).');
+  });
+
+  // dynamic marking: hide badges if endpoint unreachable (best-effort)
+  (function checkEndpoints(){
+    const checks = [
+      {url:'/predict_ui', el:'predict_ui'},
+      {url:'/admin', el:'dashboard'}
+    ];
+    checks.forEach(c=>{
+      fetch(c.url).then(r=>{
+        if(!r.ok) {
+          // find matching feature and mark as dev
+          const node = document.querySelector(`[data-feature="${c.el}"]`);
+          if(node){
+            node.querySelector('.controls .badge').className = 'badge dev';
+            node.querySelector('.controls .badge').textContent = 'DEV';
+          }
+        }
+      }).catch(()=>{/* ignore */});
+    });
+  })();
+</script>
+</body>
+</html>

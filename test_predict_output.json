@@ -1,0 +1,19 @@
+{
+    "xgb": {
+        "prediction": 4,
+        "probabilities": [
+            0.006738489028066397,
+            0.00011431916936999187,
+            0.000631239206995815,
+            6.627223046962172e-05,
+            0.9924496412277222
+        ],
+        "score": 0.9924496412277222
+    },
+    "cnn_score": 1.0,
+    "dqn_label": 24,
+    "dqn_action": "watch",
+    "final_score": 0.7969798564910889,
+    "should_honeypot": true,
+    "xai_explanation": "High traffic ingestion rate (100.0 pkts/s) | Active TCP SYN handshake flag"
+}

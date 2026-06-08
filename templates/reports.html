@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ABHEDYA — Compliance & Threat Reports</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #03060a;
+      --panel: rgba(10, 15, 24, 0.72);
+      --panel-border: rgba(255, 115, 0, 0.15);
+      --accent: #ff7300;
+      --accent-glow: rgba(255, 115, 0, 0.35);
+      --accent-2: #ffae42;
+      --muted: #8b9bb0;
+      --foreground: #f0f4f9;
+      --glass-bg: rgba(10, 15, 24, 0.8);
+      --glass-blur: blur(14px);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--foreground);
+      font-family: "Plus Jakarta Sans", sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Honeycomb pattern overlay using SVG data-uri (subtle) */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'><defs><pattern id='p' x='0' y='0' width='40' height='34' patternUnits='userSpaceOnUse'><path d='M20 0 L40 10 L40 24 L20 34 L0 24 L0 10 Z' fill='none' stroke='%23ff7300' stroke-opacity='0.02' stroke-width='1'/></pattern></defs><rect width='100%' height='100%' fill='url(%23p)'/></svg>");
+      opacity: 0.2;
+    }
+
+    /* HEADER */
+    header {
+      position: sticky;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 84px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      background: rgba(3, 6, 10, 0.85);
+      box-shadow: 0 6px 30px rgba(0, 0, 0, 0.6);
+      z-index: 60;
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--panel-border);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-wrap {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 115, 0, 0.08);
+      border: 1px solid rgba(255, 115, 0, 0.2);
+      box-shadow: 0 0 15px rgba(255, 115, 0, 0.15);
+    }
+
+    .title {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .title .brand {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 0.5px;
+    }
+
+    .title .tag {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 2px;
+      font-weight: 500;
+    }
+
+    .admin-info {
+      text-align: right;
+      font-size: 0.85rem;
+    }
+
+    .admin-info div {
+      color: var(--accent-2);
+      font-weight: 700;
+    }
+
+    .admin-info span {
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .back-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 174, 66, 0.25);
+      color: var(--accent-2);
+      font-weight: 700;
+      font-size: 0.85rem;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .back-btn:hover {
+      background: var(--accent-2);
+      color: #03060a;
+      box-shadow: 0 0 12px rgba(255, 174, 66, 0.3);
+    }
+
+    /* MAIN CONTAINER */
+    .container {
+      max-width: 900px;
+      margin: 40px auto 60px;
+      padding: 0 20px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .report-card {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      border-radius: 20px;
+      padding: 32px;
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 15px 45px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+
+    .report-card h2 {
+      margin-bottom: 24px;
+      color: #ffffff;
+      font-size: 1.6rem;
+      font-weight: 800;
+      border-bottom: 1px solid rgba(255, 115, 0, 0.15);
+      padding-bottom: 12px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--accent-2);
+      margin-bottom: 8px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    select, input[type="date"], input[type="week"], input[type="month"] {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid rgba(255, 115, 0, 0.2);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.45);
+      color: #ffffff;
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+      transition: all 0.25s ease;
+    }
+
+    select:focus, input:focus {
+      border-color: var(--accent-2);
+      box-shadow: 0 0 12px rgba(255, 174, 66, 0.18);
+    }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 115, 0, 0.2), transparent);
+      margin: 28px 0;
+    }
+
+    /* PREVIEW BLOCK */
+    .report-preview {
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 115, 0, 0.08);
+      padding: 24px;
+    }
+
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      padding-bottom: 8px;
+    }
+
+    .preview-header h3 {
+      font-size: 1.05rem;
+      color: var(--accent-2);
+      font-weight: 800;
+    }
+
+    .preview-subtext {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+    }
+
+    .metric-box {
+      background: rgba(255, 115, 0, 0.02);
+      border: 1px solid rgba(255, 115, 0, 0.06);
+      border-left: 4px solid var(--accent);
+      padding: 14px;
+      border-radius: 8px;
+    }
+
+    .metric-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .metric-value {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #ffffff;
+      font-family: "JetBrains Mono", monospace;
+    }
+
+    /* ACTIONS BUTTONS */
+    .btn-group {
+      display: flex;
+      gap: 14px;
+      margin-top: 8px;
+    }
+
+    .btn {
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      color: #03060a;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.95rem;
+      box-shadow: 0 4px 16px var(--accent-glow);
+      flex: 1;
+      transition: all 0.25s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 22px rgba(255, 115, 0, 0.55);
+      filter: brightness(1.1);
+    }
+
+    .btn.btn-secondary {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--accent-2);
+      border: 1px solid rgba(255, 115, 0, 0.25);
+      box-shadow: none;
+    }
+
+    .btn.btn-secondary:hover {
+      background: rgba(255, 115, 0, 0.08);
+      border-color: var(--accent-2);
+      box-shadow: 0 0 12px rgba(255, 174, 66, 0.15);
+      transform: none;
+    }
+
+    @media (max-width: 650px) {
+      header {
+        padding: 0 16px;
+      }
+      .admin-info {
+        display: none;
+      }
+      .btn-group {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="header-left">
+    <div class="logo-wrap" aria-hidden="true">
+      <svg width="32" height="32" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="lg" x1="0" x2="1">
+            <stop offset="0" stop-color="#ff7a29"/>
+            <stop offset="1" stop-color="#ffae42"/>
+          </linearGradient>
+        </defs>
+        <path d="M32 4 L54 12 L54 30 C54 46 44 57 32 60 C20 57 10 46 10 30 L10 12 Z" fill="url(#lg)"/>
+      </svg>
+    </div>
+    <div class="title">
+      <div class="brand">ABHEDYA</div>
+      <div class="tag">Compliance Reporting & Audit Records</div>
+    </div>
+  </div>
+
+  <div style="display:flex; align-items:center; gap:16px;">
+    <div class="admin-info">
+      <div><strong>{{ user|default('admin') }}</strong></div>
+      <span>SecOps Audit Mode</span>
+    </div>
+    <a href="/admin_dashboard" class="back-btn">← Dashboard</a>
+  </div>
+</header>
+
+<div class="container">
+  <div class="report-card">
+    <h2>Operations Report</h2>
+
+    <div class="form-group">
+      <label for="reportType">Report Configuration</label>
+      <select id="reportType" onchange="updatePeriodSelector()">
+        <option value="daily">Daily Threat Operations Report</option>
+        <option value="weekly">Weekly Mitigations Audit Report</option>
+        <option value="monthly">Monthly System Integrity Report</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="reportPeriod">Target Period</label>
+      <div id="periodSelectorContainer">
+        <input type="date" id="reportPeriod" value="{{ today_date }}" />
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- PREVIEW BOX -->
+    <div class="report-preview">
+      <div class="preview-header">
+        <h3>Audit Summary: <span id="preview-title-date">Daily - {{ today_date }}</span></h3>
+      </div>
+      <div class="preview-subtext">
+        Live database aggregation for the targeted period. Verify counts before generating PDF.
+      </div>
+      
+      <div class="preview-grid">
+        <div class="metric-box">
+          <div class="metric-label">Total Signals Captured</div>
+          <div class="metric-value" id="preview-total-events">—</div>
+        </div>
+        
+        <div class="metric-box" style="border-left-color: var(--danger);">
+          <div class="metric-label">Ensemble Anomalies</div>
+          <div class="metric-value" id="preview-anomalies">—</div>
+        </div>
+        
+        <div class="metric-box" style="border-left-color: #a855f7;">
+          <div class="metric-label">Decoy Redirections</div>
+          <div class="metric-value" id="preview-honeypot">—</div>
+        </div>
+        
+        <div class="metric-box" style="border-left-color: var(--warning);">
+          <div class="metric-label">Active IP Blocks</div>
+          <div class="metric-value" id="preview-ips-blocked">—</div>
+        </div>
+        
+        <div class="metric-box" style="border-left-color: var(--muted);">
+          <div class="metric-label">Defense Engine Version</div>
+          <div class="metric-value" id="preview-model-version">Hybrid v2.1.0</div>
+        </div>
+        
+        <div class="metric-box" style="border-left-color: var(--muted);">
+          <div class="metric-label">Report Query Latency</div>
+          <div class="metric-value" id="preview-audit-time">0.00s</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="divider"></div>
+
+    <div class="btn-group">
+      <button class="btn" onclick="downloadReport('pdf')">Export PDF Document</button>
+      <button class="btn btn-secondary" onclick="downloadReport('csv')">Export Raw Logs (CSV)</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+function updatePeriodSelector() {
+    const selector = document.getElementById('reportType');
+    const container = document.getElementById('periodSelectorContainer');
+    if (!selector || !container) return;
+
+    const type = selector.value;
+    let html = '';
+    const today = new Date().toISOString().split('T')[0];
+    const previewTitle = document.getElementById('preview-title-date');
+
+    switch (type) {
+        case 'daily':
+            html = '<input type="date" id="reportPeriod" value="' + today + '" onchange="updatePreviewTitle()" />';
+            if (previewTitle) previewTitle.textContent = 'Daily - ' + today;
+            break;
+        case 'weekly':
+            const currentWeek = new Date().getFullYear() + '-W' + String(Math.ceil((new Date() - new Date(new Date().getFullYear(), 0, 1)) / (86400000 * 7))).padStart(2, '0');
+            html = '<input type="week" id="reportPeriod" value="' + currentWeek + '" onchange="updatePreviewTitle()" />';
+            if (previewTitle) previewTitle.textContent = 'Weekly - ' + currentWeek;
+            break;
+        case 'monthly':
+            const currentMonth = new Date().toISOString().substring(0, 7);
+            html = '<input type="month" id="reportPeriod" value="' + currentMonth + '" onchange="updatePreviewTitle()" />';
+            if (previewTitle) previewTitle.textContent = 'Monthly - ' + currentMonth;
+            break;
+    }
+
+    container.innerHTML = html;
+    fetchLivePreview();
+}
+
+function updatePreviewTitle() {
+    const reportTypeEl = document.getElementById('reportType');
+    const reportPeriodEl = document.getElementById('reportPeriod');
+    const previewTitleEl = document.getElementById('preview-title-date');
+    if (!reportTypeEl || !reportPeriodEl || !previewTitleEl) return;
+    
+    const type = reportTypeEl.options[reportTypeEl.selectedIndex].text.split(' ')[0];
+    previewTitleEl.textContent = type + ' - ' + reportPeriodEl.value;
+    fetchLivePreview();
+}
+
+async function fetchLivePreview() {
+    const typeEl = document.getElementById("reportType");
+    const periodEl = document.getElementById("reportPeriod");
+
+    if (!typeEl || !periodEl) return;
+
+    const type = typeEl.value;
+    const period = periodEl.value;
+
+    if (!period) return;
+
+    // Show loading placeholders
+    document.getElementById("preview-total-events").innerText = "...";
+    document.getElementById("preview-anomalies").innerText = "...";
+    document.getElementById("preview-honeypot").innerText = "...";
+    document.getElementById("preview-ips-blocked").innerText = "...";
+
+    try {
+        const res = await fetch(`/admin/reports/summary?type=${type}&period=${period}`);
+        const data = await res.json();
+
+        document.getElementById("preview-total-events").innerText = data.total_events || '0';
+        document.getElementById("preview-anomalies").innerText = data.anomalies || '0';
+        document.getElementById("preview-honeypot").innerText = data.honeypots || '0';
+        document.getElementById("preview-ips-blocked").innerText = data.blocked || '0';
+        document.getElementById("preview-model-version").innerText = data.model || 'Hybrid v2.1.0';
+        document.getElementById("preview-audit-time").innerText = (data.audit_time ? data.audit_time.toFixed(3) : '0.00') + "s";
+    } catch (e) {
+        console.error("Preview fetch failed", e);
+    }
+}
+
+function downloadReport(format) {
+    const reportTypeEl = document.getElementById('reportType');
+    const reportPeriodEl = document.getElementById('reportPeriod');
+
+    if (!reportTypeEl || !reportPeriodEl) return;
+
+    const type = reportTypeEl.value;
+    const period = reportPeriodEl.value;
+
+    if (format === 'pdf') {
+        window.location.href = `/admin/reports/download/pdf?type=${type}&period=${period}`;
+    } else if (format === 'csv') {
+        window.location.href = `/admin/reports/download/csv?type=${type}&period=${period}`;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+    if (typeof '{{ today_date }}' === 'undefined') {
+        const today = new Date().toISOString().split('T')[0];
+        const dateInput = document.getElementById('reportPeriod');
+        if(dateInput) dateInput.value = today;
+    }
+    updatePeriodSelector(); 
+});
+</script>
+</body>
+</html>

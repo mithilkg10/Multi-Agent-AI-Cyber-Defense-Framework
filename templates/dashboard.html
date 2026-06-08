@@ -1,0 +1,1935 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ABHEDYA — Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  
+  <!-- Modern Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet Map & DataTables CSS -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    :root {
+      --bg: #03060a;
+      --panel: rgba(10, 15, 24, 0.72);
+      --panel-border: rgba(255, 115, 0, 0.15);
+      --accent: #ff7300;
+      --accent-glow: rgba(255, 115, 0, 0.35);
+      --accent-2: #ffae42;
+      --muted: #8b9bb0;
+      --foreground: #f0f4f9;
+      --glass-bg: rgba(10, 15, 24, 0.8);
+      --glass-blur: blur(14px);
+      --success: #00e676;
+      --danger: #ff1744;
+      --warning: #ffb300;
+      --kpi-bg: rgba(255, 115, 0, 0.03);
+    }
+
+    /* Reset & Scrollbar */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 115, 0, 0.3) rgba(0, 0, 0, 0.2);
+    }
+    
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 115, 0, 0.3);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--accent);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--foreground);
+      font-family: "Plus Jakarta Sans", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* Honeycomb Overlay Background */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'><defs><pattern id='p' x='0' y='0' width='40' height='34' patternUnits='userSpaceOnUse'><path d='M20 0 L40 10 L40 24 L20 34 L0 24 L0 10 Z' fill='none' stroke='%23ff7300' stroke-opacity='0.02' stroke-width='1'/></pattern></defs><rect width='100%' height='100%' fill='url(%23p)'/></svg>");
+      opacity: 0.25;
+      mix-blend-mode: overlay;
+    }
+
+    /* HEADER */
+    header {
+      position: sticky;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 84px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      background: rgba(3, 6, 10, 0.85);
+      box-shadow: 0 6px 30px rgba(0, 0, 0, 0.6);
+      z-index: 2200;
+      backdrop-filter: var(--glass-blur);
+      border-bottom: 1px solid var(--panel-border);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-wrap {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 115, 0, 0.08);
+      border: 1px solid rgba(255, 115, 0, 0.2);
+      box-shadow: 0 0 15px rgba(255, 115, 0, 0.15);
+    }
+
+    .title {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .title .brand {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 0.5px;
+      text-shadow: 0 0 15px rgba(255, 115, 0, 0.15);
+    }
+
+    .title .tag {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 2px;
+      font-weight: 550;
+    }
+
+    .admin-info {
+      text-align: right;
+      font-size: 0.85rem;
+    }
+
+    .admin-info strong {
+      color: var(--accent-2);
+      font-weight: 700;
+    }
+
+    .admin-info .small {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .home-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      text-decoration: none;
+      color: #03060a;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      box-shadow: 0 4px 16px var(--accent-glow);
+      transition: all 0.2s ease;
+    }
+
+    .home-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(255, 115, 0, 0.65);
+    }
+
+    /* GLOBAL MAP VIEWPORT */
+    #threat-map-card {
+      position: relative;
+      width: 100vw;
+      height: 480px;
+      margin-left: calc(-50vw + 50%);
+      margin-right: calc(-50vw + 50%);
+      background: #020406;
+      border-bottom: 1px solid var(--panel-border);
+      overflow: hidden;
+      z-index: 5;
+    }
+
+    #world-map {
+      width: 100%;
+      height: 100%;
+    }
+
+    #threat-map-card .card-title {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1200;
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--accent-2);
+      background: rgba(8, 12, 20, 0.8);
+      border: 1px solid var(--panel-border);
+      padding: 8px 16px;
+      border-radius: 8px;
+      backdrop-filter: blur(8px);
+      pointer-events: none;
+    }
+
+    /* MAP INFO CONTAINERS */
+    #map-info-container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 20px;
+      margin: -24px auto 32px;
+      max-width: 900px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .info-card {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 16px;
+      color: #eaeaea;
+      font-size: 0.85rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    .legend-card {
+      width: 240px;
+    }
+
+    .info-card h3 {
+      margin-bottom: 10px;
+      color: var(--accent-2);
+      font-size: 0.9rem;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .info-card div {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .dot.gold { background: #ffcc66; box-shadow: 0 0 8px #ffcc66; }
+    .dot.red { background: #ff3333; box-shadow: 0 0 8px #ff3333; }
+    .dot.amber { background: #ff8c1a; box-shadow: 0 0 8px #ff8c1a; }
+
+    /* Signal Origins table */
+    #map-info-container table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    #map-info-container th {
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255, 115, 0, 0.2);
+    }
+
+    #map-info-container td {
+      padding: 6px 4px;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+      font-weight: 600;
+    }
+
+    /* KPI STATS STRIP */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      max-width: 1400px;
+      margin: 0 auto 24px;
+      padding: 0 20px;
+      z-index: 10;
+      position: relative;
+    }
+
+    .kpi-card {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      padding: 16px 20px;
+      border-radius: 12px;
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+      display: flex;
+      flex-direction: column;
+      transition: all 0.3s ease;
+    }
+
+    .kpi-card:hover {
+      border-color: rgba(255, 115, 0, 0.3);
+      transform: translateY(-1.5px);
+    }
+
+    .kpi-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .kpi-value {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--accent-2);
+      margin-top: 6px;
+      font-family: "JetBrains Mono", monospace;
+    }
+
+    .kpi-card.spike {
+      background: linear-gradient(135deg, rgba(255, 23, 68, 0.12), rgba(255, 115, 0, 0.05));
+      border-color: var(--danger);
+      box-shadow: 0 0 20px rgba(255, 23, 68, 0.35);
+    }
+
+    /* SIDEBAR NAVIGATION */
+    .sidebar {
+      position: fixed;
+      top: 84px;
+      left: -320px;
+      width: 320px;
+      height: calc(100% - 84px);
+      background: rgba(6, 10, 15, 0.98);
+      border-right: 1px solid var(--panel-border);
+      padding: 24px;
+      z-index: 3000;
+      transition: left 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow-y: auto;
+      backdrop-filter: blur(20px);
+      box-shadow: 10px 0 40px rgba(0, 0, 0, 0.8);
+    }
+
+    .sidebar.open {
+      left: 0;
+    }
+
+    .sidebar-toggle {
+      position: fixed;
+      top: 98px;
+      right: 24px;
+      z-index: 6000;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      color: #03060a;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 800;
+      font-family: inherit;
+      font-size: 0.85rem;
+      border: none;
+      box-shadow: 0 6px 18px var(--accent-glow);
+      transition: all 0.2s ease;
+    }
+
+    .sidebar-toggle:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    .sidebar h3 {
+      color: var(--accent-2);
+      font-size: 1.1rem;
+      font-weight: 800;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid rgba(255, 115, 0, 0.15);
+      padding-bottom: 10px;
+    }
+
+    .menu-btn {
+      display: block;
+      width: 100%;
+      background: transparent;
+      border: 1px solid transparent;
+      color: #eaeaea;
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 0.95rem;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 8px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    .menu-btn:hover {
+      background: rgba(255, 115, 0, 0.08);
+      border-color: rgba(255, 115, 0, 0.25);
+      color: var(--accent-2);
+      padding-left: 20px;
+    }
+
+    .sidebar .top-actions, .sidebar .secondary-actions {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar .secondary-actions {
+      margin-top: 16px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.08);
+      padding-top: 16px;
+    }
+
+    /* GRID LAYOUT CONTAINER */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto 50px;
+      padding: 0 20px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .left {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .panel {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+
+    .panel h2 {
+      color: #ffffff;
+      font-size: 1.1rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    /* STREAM CARDS */
+    .stream {
+      height: 380px;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 115, 0, 0.05);
+      margin-top: 12px;
+    }
+
+    .stream .item {
+      padding: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+      font-size: 0.85rem;
+      color: #cbd5e1;
+    }
+
+    .stream .item strong {
+      font-family: "JetBrains Mono", monospace;
+      color: var(--accent-2);
+    }
+
+    .stream .time {
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-family: "JetBrains Mono", monospace;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .right {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      padding: 20px;
+      border-radius: 16px;
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+
+    .metric {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--accent-2);
+      font-family: "JetBrains Mono", monospace;
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .btn {
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      color: #03060a;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.85rem;
+      box-shadow: 0 4px 12px var(--accent-glow);
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    /* CHART WRAPPER */
+    .chart-wrap {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 10px;
+      padding: 12px;
+      border: 1px solid rgba(255, 115, 0, 0.05);
+      margin-top: 14px;
+      min-height: 180px;
+      position: relative;
+    }
+
+    .chart-wrap canvas {
+      display: block;
+      width: 100% !important;
+      height: 220px !important;
+    }
+
+    /* DATA TABLES MODS */
+    .dataTables_wrapper .dataTables_scroll {
+      overflow-x: auto;
+      max-height: 320px;
+    }
+
+    table.dataTable {
+      width: 100% !important;
+      border-collapse: collapse !important;
+    }
+
+    table.dataTable thead th {
+      background: #090f19 !important;
+      color: var(--accent-2) !important;
+      font-weight: 700 !important;
+      font-size: 0.78rem !important;
+      text-transform: uppercase !important;
+      border-bottom: 2px solid var(--panel-border) !important;
+      padding: 10px 12px !important;
+    }
+
+    table.dataTable tbody td {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
+      padding: 10px 12px !important;
+      color: #e2e8f0 !important;
+      font-size: 0.85rem !important;
+    }
+
+    table.dataTable tbody tr:hover td {
+      background-color: rgba(255, 115, 0, 0.05) !important;
+    }
+
+    /* Toast messaging overlay */
+    #toast {
+      display: none;
+      position: fixed;
+      right: 24px;
+      top: 96px;
+      z-index: 10000;
+      background: rgba(8, 12, 20, 0.95);
+      border-left: 5px solid var(--accent);
+      padding: 14px 20px;
+      border-radius: 10px;
+      color: #ffffff;
+      font-weight: 700;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 115, 0, 0.25);
+      border-left-width: 5px;
+    }
+
+    #sidebar-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      z-index: 2500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      backdrop-filter: blur(4px);
+    }
+
+    body.menu-open #sidebar-overlay {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .mitre-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      background: rgba(255, 174, 66, 0.1);
+      border: 1px solid rgba(255, 174, 66, 0.3);
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--accent-2);
+    }
+    @media (max-width: 1100px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      .kpi-strip {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      #map-info-container {
+        flex-direction: column;
+        align-items: center;
+        margin-top: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="sidebar-overlay"></div>
+  
+  <header>
+    <div class="header-left">
+      <div class="logo-wrap" aria-hidden="true">
+        <svg width="36" height="36" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="lg" x1="0" x2="1">
+              <stop offset="0" stop-color="#ff7a29"/>
+              <stop offset="1" stop-color="#ffae42"/>
+            </linearGradient>
+          </defs>
+          <path d="M32 4 L54 12 L54 30 C54 46 44 57 32 60 C20 57 10 46 10 30 L10 12 Z" fill="url(#lg)"/>
+        </svg>
+      </div>
+      <div class="title">
+        <div class="brand">ABHEDYA</div>
+        <div class="tag">Adaptive AI Cyber Defense Operations</div>
+      </div>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:16px;">
+      <a href="/" class="home-btn" title="Sign out of operations">
+        Logout
+      </a>
+      <div class="admin-info">
+        <div><strong>{{ user|default('admin') }}</strong></div>
+        <div class="small">Security Analyst</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- GLOBAL THREAT MAP -->
+  <div id="threat-map-card">
+    <div class="card-title">Live Global Threat Activity</div>
+    <div id="world-map"></div>
+  </div>
+
+  <!-- MAP META INFO -->
+  <div id="map-info-container">
+    <!-- Legend -->
+    <div class="info-card legend-card">
+      <h3>Telemetry Legend</h3>
+      <div><span class="dot gold"></span> SOC Target Node (India)</div>
+      <div><span class="dot red"></span> Severe Threat (Hostile)</div>
+      <div><span class="dot amber"></span> Standard Ingress Log</div>
+    </div>
+
+    <!-- Live origins ranking -->
+    <div class="info-card legend-card" style="width: 380px;">
+      <h3>Threat Source Distribution</h3>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 30px;">#</th>
+            <th style="text-align: left;">Region / Origin</th>
+            <th style="text-align: center; width: 60px;">Flag</th>
+            <th style="text-align: right; width: 80px;">Vectors</th>
+          </tr>
+        </thead>
+        <tbody id="country-rank-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- KPI METRICS STRIP -->
+  <div class="kpi-strip">
+    <div class="kpi-card" id="kpi-detections">
+      <div class="kpi-label">Live Detections</div>
+      <div class="kpi-value" id="kpi-det-val" data-count-from="0" data-count-to="0">0</div>
+    </div>
+
+    <div class="kpi-card" id="kpi-honeypot">
+      <div class="kpi-label">Decoy Redirections</div>
+      <div class="kpi-value" id="kpi-hp-val" data-count-from="0" data-count-to="0">0</div>
+    </div>
+
+    <div class="kpi-card" id="kpi-logins">
+      <div class="kpi-label">SecOps Logins</div>
+      <div class="kpi-value" id="kpi-login-val" data-count-from="0" data-count-to="0">0</div>
+    </div>
+
+    <div class="kpi-card" id="kpi-requests">
+      <div class="kpi-label">Pending Clearances</div>
+      <div class="kpi-value" id="pending-requests-count" data-count-from="0" data-count-to="0">0</div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR TOGGLE -->
+  <button
+    id="sidebarToggle"
+    class="sidebar-toggle"
+    aria-expanded="false"
+    onclick="toggleSidebar()"
+  >
+    ☰ Operations Menu
+  </button>
+
+  <!-- SIDEBAR CONTENT -->
+  <aside id="sidebar" class="sidebar" aria-hidden="true">
+    <h3>Defense Control Panel</h3>
+    <div class="top-actions">
+      <button class="menu-btn" onclick="location.href='/admin/intel'">Intelligence Records</button>
+      <button class="menu-btn" onclick="location.href='/admin/blocklist'">Active Blocklist</button>
+      <button class="menu-btn reports-btn" onclick="location.href='/admin/reports'">Compliance Reports</button>
+    </div>
+
+    <div class="secondary-actions">
+      <button class="menu-btn" onclick="location.href='/predict'">Threat Decision Console</button>
+      <button class="menu-btn" onclick="location.href='/admin/requests'">Clearance Requests</button>
+    </div>
+
+    <div style="height:30px"></div>
+    <div class="small" style="color: var(--muted); line-height: 1.4;">
+      Telemetry Source: local sniffers<br>
+      Ingress Pipeline: Apache Kafka<br>
+      Defense Engine: Ensemble Online
+    </div>
+  </aside>
+
+  <!-- DASHBOARD CONTENT CARDS -->
+  <div class="container">
+    <div class="grid">
+      <!-- LEFT CONTAINER -->
+      <div class="left">
+        <!-- Live traffic chart -->
+        <div class="panel">
+          <h2>Traffic Ingress Telemetry: Local vs Global</h2>
+          <div class="small">Timeseries capture of local target versus global ingress signals</div>
+          <div class="chart-wrap"><canvas id="liveIpLine"></canvas></div>
+          <div class="controls">
+            <button class="btn" id="btnRefreshGeo">Force Sync Geo</button>
+          </div>
+        </div>
+
+        <!-- Live Detections Datatable -->
+        <div class="panel">
+          <h2>Live Security Detections <span style="float:right" id="det-count" class="metric" style="font-size: 1.25rem;">0</span></h2>
+          <div class="small">Real-time multi-agent classification evaluation logs</div>
+          <div style="margin-top:14px;">
+            <table id="live-detections" class="display" style="width:100%">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Traffic Flow</th>
+                  <th>Core Engine</th>
+                  <th>Pred</th>
+                  <th>Anomaly Score</th>
+                  <th>MITRE ID</th>
+                  <th>Timestamp</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Honeypot triggers table -->
+        <div class="panel">
+          <h2>Decoy Engagements <span style="float:right" id="hp-count" class="metric" style="font-size: 1.25rem;">0</span></h2>
+          <div class="small">Attacker traffic dynamically locked in column-deranged environment</div>
+          <div style="margin-top:14px;">
+            <table id="hp-triggers" class="display" style="width:100%">
+              <thead>
+                <tr>
+                  <th>Decoy Session ID</th>
+                  <th>Origin IP</th>
+                  <th>Signature UA</th>
+                  <th>Decoy Destination</th>
+                  <th>Redirection Time</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT CONTAINER -->
+      <div class="right">
+        <!-- SIEM Active Control & Threat Simulator -->
+        <div class="card" style="border-color: var(--accent); box-shadow: 0 0 15px rgba(255, 115, 0, 0.2); margin-bottom: 10px;">
+          <h2 style="margin-bottom:4px; color:var(--accent-2);">SIEM Active Controls</h2>
+          <div class="small" style="margin-bottom:12px;">Active response tuning, attack simulations, and audit tools</div>
+          
+          <!-- Threshold and Decoy Persona Controls -->
+          <div style="background: rgba(0,0,0,0.25); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,115,0,0.08); margin-bottom: 12px;">
+            <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:10px;">
+              <span class="small" style="font-weight:700;">Threat Sensitivity Threshold: <span id="threshold-val" style="color:#ffffff; font-family:'JetBrains Mono',monospace;">0.65</span></span>
+              <input type="range" id="threshold-slider" min="0.10" max="0.95" step="0.05" value="0.65" style="width:100%; accent-color: var(--accent);">
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span class="small" style="font-weight:700;">Honeypot Decoy Persona:</span>
+              <select id="persona-select" style="background:#090f19; color:#ffffff; border:1px solid var(--panel-border); padding:4px 8px; border-radius:6px; font-weight:700; font-family:inherit;">
+                <option value="finance">Finance Gateway</option>
+                <option value="scada">SCADA PLC Grid</option>
+                <option value="military">Tactical Arsenal</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Attack Simulator Buttons -->
+          <div style="margin-bottom: 12px;">
+            <span class="small" style="font-weight:700; display:block; margin-bottom:6px;">Real-Time Attack Simulation:</span>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+              <button class="btn" onclick="triggerSimulation('ddos')" style="padding:6px; font-size:0.75rem;">Simulate DDoS</button>
+              <button class="btn" onclick="triggerSimulation('sqli')" style="padding:6px; font-size:0.75rem;">Simulate SQLi</button>
+              <button class="btn" onclick="triggerSimulation('bruteforce')" style="padding:6px; font-size:0.75rem;">Simulate Brute</button>
+              <button class="btn" onclick="triggerSimulation('scan')" style="padding:6px; font-size:0.75rem;">Simulate Scan</button>
+            </div>
+          </div>
+
+          <!-- Manual IP block form -->
+          <div style="background: rgba(0,0,0,0.25); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,115,0,0.08); margin-bottom: 12px;">
+            <span class="small" style="font-weight:700; display:block; margin-bottom:6px;">Manual IP Mitigation:</span>
+            <div style="display:flex; gap:6px;">
+              <input type="text" id="manual-ip-input" placeholder="e.g. 192.168.1.100" style="background:#090f19; color:#fff; border:1px solid var(--panel-border); padding:6px; border-radius:6px; font-size:0.78rem; flex:1; outline:none;">
+              <button class="btn" onclick="submitManualBlock()" style="padding:6px 12px; font-size:0.75rem;">Block</button>
+            </div>
+          </div>
+
+          <!-- Log Integrity Check -->
+          <div>
+            <span class="small" style="font-weight:700; display:block; margin-bottom:6px;">Self-Defense Log Verification:</span>
+            <button class="btn" id="btnVerifyLogs" style="width:100%; background: linear-gradient(90deg, #00e676, #00b0ff); color:#000;">Verify Cryptographic Logs</button>
+          </div>
+        </div>
+
+        <!-- Recent Logins Stream -->
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div class="metric" id="login-count">0</div>
+              <div class="metric-label">Operational Logins</div>
+            </div>
+            <div>
+              <button class="btn" onclick="location.href='/admin/blocklist'">Manage IPs</button>
+            </div>
+          </div>
+          <div class="small" style="margin-top:10px">Live SecOps interface authorization requests</div>
+          <div class="stream" id="login-stream"></div>
+        </div>
+
+        <!-- Network charts visuals -->
+        <div class="card">
+          <h2 style="margin-bottom:4px; color:var(--accent-2);">Intrusion Analytics</h2>
+          <div class="small">Volume per source host & attack category breakdown</div>
+          <div class="chart-wrap"><canvas id="topIpsCanvas"></canvas></div>
+          <div class="chart-wrap"><canvas id="attackPieCanvas"></canvas></div>
+          <div class="controls">
+            <button class="btn" id="btnRefreshCharts">Refresh Analytics</button>
+            <button class="btn" id="btnUnblockTop" style="background: linear-gradient(90deg, var(--danger), #ff5252); color: #fff;">Unblock Top Rule</button>
+          </div>
+        </div>
+
+        <!-- Pending access clearances -->
+        <div class="card" id="registrations-card">
+          <h2 style="margin-bottom:4px; color:var(--accent-2);">SecOps Clearances</h2>
+          <div class="small">New account authorizations awaiting supervisor review</div>
+          <div style="margin-top:12px;">
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+              <div>
+                <div class="metric" id="reg-count">0</div>
+                <div class="small">Pending authorizations</div>
+              </div>
+              <button class="btn" id="btn-refresh-reg">Scan Queue</button>
+            </div>
+            <div style="margin-top:14px; border-top: 1px dashed rgba(255, 255, 255, 0.08); padding-top: 14px;">
+              <div class="small" style="margin-bottom:8px">Operations Activity Ticker</div>
+              <div id="alerts-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <!-- Javascript assets -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <script>
+    /* Leaflet Threat Map Setup */
+    const map = L.map('world-map', {
+      zoomControl: true,
+      attributionControl: false,
+      worldCopyJump: false,
+      maxBounds: [[-85, -180], [85, 180]],
+      maxBoundsViscosity: 1.0
+    }).setView([22, 10], 2.2);
+
+    const worldBounds = [[-85, -180], [85, 180]];
+    map.setMaxBounds(worldBounds);
+    map.setMinZoom(2.0);
+    map.setMaxZoom(4.8);
+
+    map.on('drag', () => map.panInsideBounds(worldBounds, { animate: false }));
+    map.on('zoomend', () => map.panInsideBounds(worldBounds, { animate: false }));
+
+    let poller = null;
+    const POLL_INTERVAL_MS = 5000;
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      subdomains: 'abcd',
+      maxZoom: 5,
+      noWrap: true, 
+      bounds: worldBounds
+    }).addTo(map);
+
+    function generateCitiesAround(lat, lng, count, spread = 1.2) {
+      const cities = [];
+      for (let i = 0; i < count; i++) {
+        cities.push([
+          lat + (Math.random() - 0.5) * spread,
+          lng + (Math.random() - 0.5) * spread
+        ]);
+      }
+      return cities;
+    }
+
+    function maybeSpawnRipple(lat, lng, color = '#ff3b3b') {
+      const isHighSeverity = Math.random() < 0.25;
+      if (!isHighSeverity) return;
+      spawnRipple(lat, lng, color);
+    }
+
+    function spawnRipple(lat, lng, color = '#ff3b3b') {
+      const ripple = L.circle([lat, lng], {
+        radius: 30000,
+        color: color,
+        weight: 2,
+        opacity: 0.9,
+        fillOpacity: 0
+      }).addTo(map);
+
+      let r = 30000;
+      const maxR = 900000;
+
+      const anim = setInterval(() => {
+        r += 25000;
+        ripple.setRadius(r);
+        ripple.setStyle({
+          opacity: Math.max(0.15, 1 - r / maxR)
+        });
+
+        if (r >= maxR) {
+          clearInterval(anim);
+          map.removeLayer(ripple);
+        }
+      }, 60);
+    }
+
+    function aggregateSignals(points) {
+      return points.slice(0, 1);
+    }
+
+    const hubs = {
+      india: [
+        ...generateCitiesAround(12.97, 77.59, 15),
+        ...generateCitiesAround(28.61, 77.20, 5),
+        ...generateCitiesAround(19.07, 72.87, 10),
+        ...generateCitiesAround(13.08, 80.27, 6),
+        ...generateCitiesAround(17.38, 78.48, 2),
+        ...generateCitiesAround(22.57, 88.36, 4),
+        ...generateCitiesAround(18.52, 73.85, 10),
+        ...generateCitiesAround(23.03, 72.58, 10),
+      ],
+      usa: [
+        ...generateCitiesAround(40.71, -74.01, 10),
+        ...generateCitiesAround(34.05, -118.24, 15),
+        ...generateCitiesAround(41.87, -87.62, 5),
+        ...generateCitiesAround(37.77, -122.42, 5),
+        ...generateCitiesAround(47.60, -122.33, 10),
+      ],
+      china: [
+        ...generateCitiesAround(39.90, 116.40, 10),
+        ...generateCitiesAround(31.23, 121.47, 5),
+        ...generateCitiesAround(23.13, 113.26, 5),
+        ...generateCitiesAround(22.54, 114.05, 10),
+      ],
+      russia: [
+        ...generateCitiesAround(55.75, 37.61, 20),
+        ...generateCitiesAround(59.93, 30.31, 15),
+        ...generateCitiesAround(56.84, 60.61, 10),
+      ],
+      middleEast: [
+        ...generateCitiesAround(25.27, 55.30, 10),
+        ...generateCitiesAround(24.71, 46.67, 10),
+        ...generateCitiesAround(35.68, 51.41, 10),
+        ...generateCitiesAround(31.95, 35.91, 10),
+        ...generateCitiesAround(32.09, 34.78, 10),
+      ],
+      africa: [
+        ...generateCitiesAround(-26.20, 28.04, 10),
+        ...generateCitiesAround(30.04, 31.23, 10),
+        ...generateCitiesAround(6.52, 3.37, 10),
+        ...generateCitiesAround(-1.29, 36.82, 10),
+      ],
+      southAmerica: [
+        ...generateCitiesAround(-23.55, -46.63, 10),
+        ...generateCitiesAround(-34.60, -58.38, 10),
+        ...generateCitiesAround(-12.05, -77.04, 10),
+        ...generateCitiesAround(-33.45, -70.66, 10),
+      ],
+      australia: [
+        ...generateCitiesAround(-33.86, 151.20, 10),
+        ...generateCitiesAround(-37.81, 144.96, 10),
+        ...generateCitiesAround(-27.47, 153.02, 10),
+        ...generateCitiesAround(-31.95, 115.86, 10),
+      ],
+      global: [
+        ...generateCitiesAround(51.50, -0.12, 10),
+        ...generateCitiesAround(48.85, 2.35, 10),
+        ...generateCitiesAround(35.68, 139.69, 10),
+        ...generateCitiesAround(25.27, 55.30, 8),
+        ...generateCitiesAround(-33.86, 151.20, 8),
+        ...generateCitiesAround(-23.55, -46.63, 8),
+      ]
+    };
+
+    function countryToFlag(country) {
+      const map = {
+        "India": "🇮🇳",
+        "United States": "🇺🇸",
+        "China": "🇨🇳",
+        "Russia": "🇷🇺",
+        "Middle East": "🌍",
+        "Africa": "🌍",
+        "South America": "🌎",
+        "Australia": "🇦🇺",
+        "Global": "🌐"
+      };
+      return map[country] || "🌐";
+    }
+
+    function pickWeightedHub() {
+      const r = Math.random();
+      if (r < 0.40) return randomFrom(hubs.india);
+      if (r < 0.55) return randomFrom(hubs.usa);
+      if (r < 0.68) return randomFrom(hubs.china);
+      if (r < 0.78) return randomFrom(hubs.russia);
+      if (r < 0.86) return randomFrom(hubs.middleEast);
+      if (r < 0.93) return randomFrom(hubs.africa);
+      if (r < 0.97) return randomFrom(hubs.southAmerica);
+      return randomFrom(hubs.australia);
+    }
+
+    function randomFrom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function getSignalColor(lat, lng) {
+      if (hubs.india.some(p => p[0] === lat && p[1] === lng)) return '#ffcc66';
+      if (hubs.usa.some(p => p[0] === lat && p[1] === lng)) return '#ff4444';
+      if (hubs.china.some(p => p[0] === lat && p[1] === lng)) return '#ff2a2a';
+      if (hubs.russia.some(p => p[0] === lat && p[1] === lng)) return '#ff1e1e';
+      return '#ff8c1a';
+    }
+
+    function interpolatePoints(latlngs, steps = 40) {
+      const points = [];
+      for (let i = 0; i < latlngs.length - 1; i++) {
+        const a = latlngs[i];
+        const b = latlngs[i + 1];
+        for (let t = 0; t <= 1; t += 1 / steps) {
+          points.push([
+            a.lat + (b.lat - a.lat) * t,
+            a.lng + (b.lng - a.lng) * t
+          ]);
+        }
+      }
+      return points;
+    }
+
+    function computeArcMidPoint(origin, destination) {
+      return L.latLng(
+        (origin.lat + destination.lat) / 2 + 10,
+        (origin.lng + destination.lng) / 2
+      );
+    }
+
+    function animatePacketFlow(pathLatLngs, color) {
+      const points = interpolatePoints(pathLatLngs, 30);
+      let idx = 0;
+
+      const packet = L.circleMarker(points[0], {
+        radius: 3,
+        color,
+        fillColor: color,
+        fillOpacity: 1,
+        weight: 0
+      }).addTo(map);
+
+      const anim = setInterval(() => {
+        if (idx >= points.length) {
+          clearInterval(anim);
+          map.removeLayer(packet);
+          return;
+        }
+        packet.setLatLng(points[idx]);
+        idx++;
+      }, 45);
+    }
+
+    fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json')
+      .then(res => res.json())
+      .then(data => {
+        L.geoJSON(data, {
+          style: {
+            color: 'rgba(255, 115, 0, 0.25)',
+            weight: 1.1,
+            fillColor: '#070a10',
+            fillOpacity: 0.5
+          }
+        }).addTo(map);
+        map.on('move', () => {
+          map.panInsideBounds(worldBounds, { animate: false });
+        });
+      });
+
+    let activeSignals = 0;
+    const MAX_SIGNALS = 45;
+
+    setInterval(() => {
+      if (activeSignals >= MAX_SIGNALS) return;
+      activeSignals++;
+
+      const p = pickWeightedHub();
+      const color = getSignalColor(p[0], p[1]);
+      const region = detectRegion(p[0], p[1]);
+      const country = hubToCountry[region] || "Global";
+      countryStats[country] = (countryStats[country] || 0) + 1;
+
+      const dot = L.circleMarker(p, {
+        radius: 6,
+        color: color,
+        fillColor: color,
+        fillOpacity: 1
+      }).addTo(map);
+
+      maybeSpawnRipple(p[0], p[1], color);
+
+      const origin = L.latLng(p[0], p[1]);
+      const destination = L.latLng(12.97, 77.59); // SOC India Hub
+      const midPoint = computeArcMidPoint(origin, destination);
+
+      const arc = L.polyline([origin, midPoint, destination], {
+        color,
+        weight: 1.4,
+        opacity: 0.5,
+        dashArray: '6,6'
+      }).addTo(map);
+
+      animatePacketFlow(arc.getLatLngs(), color);
+
+      setTimeout(() => map.removeLayer(arc), 5000);
+      setTimeout(() => {
+        map.removeLayer(dot);
+        activeSignals--;
+      }, 6000);
+    }, 1100);
+
+    function toggleSidebar(forceClose = false) {
+      const sb = document.getElementById('sidebar');
+      const toggle = document.getElementById('sidebarToggle');
+      if (!sb || !toggle) return;
+
+      const isOpen = sb.classList.contains('open');
+
+      if (isOpen || forceClose) {
+        sb.classList.remove('open');
+        document.body.classList.remove('menu-open');
+        toggle.setAttribute('aria-expanded','false');
+        toggle.innerText = '☰ Operations Menu';
+      } else {
+        sb.classList.add('open');
+        document.body.classList.add('menu-open');
+        toggle.setAttribute('aria-expanded','true');
+        toggle.innerText = '✕ Close Menu';
+      }
+    }
+
+    document.getElementById('sidebar-overlay')?.addEventListener('click', () => toggleSidebar(true));
+    document.getElementById('world-map')?.addEventListener('click', () => {
+      if (document.body.classList.contains('menu-open')) {
+        toggleSidebar(true);
+      }
+    });
+
+    let detTable = null, hpTable = null;
+    let topIpsChart = null, attackPieChart = null, liveIpChart = null;
+
+    function initTables(){
+      const detTableEl = $('#live-detections');
+      if (detTableEl.length) {
+        detTable = detTableEl.DataTable({
+          columns:[
+            {data:'id'},
+            {data:'traffic_id'},
+            {data:'model_used'},
+            {data:'prediction'},
+            {data:'final_score'},
+            {
+              data:'mitre_id',
+              render: function(data, type, row) {
+                if (!data) return '-';
+                const xai = row.xai_explanation || 'No details.';
+                return `<span class="mitre-badge" style="cursor:help;" title="${xai}">${data}</span>`;
+              }
+            },
+            {data:'timestamp'}
+          ],
+          pageLength:10,
+          order:[[0,'desc']]
+        });
+      }
+      const hpTableEl = $('#hp-triggers');
+      if (hpTableEl.length) {
+        hpTable = hpTableEl.DataTable({
+          columns:[{data:'sid'},{data:'ip_address'},{data:'user_agent'},{data:'endpoint'},{data:'created_at'}],
+          pageLength:6,
+          order:[[4,'desc']]
+        });
+      }
+    }
+
+    function normalizeModelName(record){
+      let mu = record.model_used || (record.raw && record.raw.model) || 'hybrid';
+      mu = String(mu).toLowerCase();
+      if (mu === 'ui') return 'Manual (UI)';
+      if (mu === 'hybrid') return 'Hybrid (XGB + CNN-LSTM)';
+      if (mu === 'xgb') return 'XGBoost';
+      if (mu === 'cnn') return 'CNN-LSTM';
+      return mu.charAt(0).toUpperCase() + mu.slice(1);
+    }
+
+    function fetchInitialData(){
+      if (detTable) {
+        $.getJSON('/admin/detections_json?limit=200').done(function(rows){
+          detTable.clear().rows.add(rows).draw();
+          $('#det-count').text(rows.length);
+          updateKpis();
+        }).fail(function(){ console.warn("detections json failed"); });
+      }
+
+      if (hpTable) {
+        $.getJSON('/admin/honeypot_logs_json?limit=200').done(function(rows){
+          if (Array.isArray(rows) && rows.length) {
+            hpTable.clear().rows.add(rows).draw();
+            $('#hp-count').text(rows.length);
+          } else {
+            hpTable.clear();
+            hpTable.row.add({ sid: "(no recent decoy triggers)", ip_address: "-", user_agent: "No recent entries", endpoint: "-", created_at: "-" }).draw();
+            $('#hp-count').text(0);
+          }
+          updateKpis();
+        }).fail(function(){ console.warn("hp logs json failed"); });
+      }
+
+      const loginStream = $('#login-stream');
+      if (loginStream.length) {
+        $.getJSON('/admin/login_logs_json?limit=200').done(function(rows){
+          loginStream.empty();
+          rows.slice(0,80).forEach(function(r){
+            loginStream.append('<div class="item"><span class="time">'+(r.created_at||'')+'</span><strong>'+(r.ip_address||'')+'</strong> → '+(r.endpoint||'')+'</div>');
+          });
+          $('#login-count').text(rows.length);
+          updateKpis();
+        }).fail(function(){ console.warn("login logs json failed"); });
+      }
+    }
+
+    function prepareCanvasForChart(canvas) {
+      if (!canvas) return null;
+      const ratio = window.devicePixelRatio || 1;
+      const w = Math.max(1, Math.floor(canvas.clientWidth * ratio));
+      const h = Math.max(1, Math.floor(canvas.clientHeight * ratio));
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w; canvas.height = h;
+      }
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      }
+      return ctx;
+    }
+
+    function renderTopIps(data){
+      if (typeof Chart === 'undefined') return;
+      const labels = data.map(d=>d.ip);
+      const values = data.map(d=>d.count);
+      const canvas = document.getElementById('topIpsCanvas');
+      if (!canvas) return;
+      const ctx = prepareCanvasForChart(canvas);
+      if (!ctx) return;
+      if (topIpsChart) try { topIpsChart.destroy(); } catch(e){}
+      topIpsChart = new Chart(ctx, {
+        type: 'bar',
+        data: { 
+          labels: labels, 
+          datasets: [{ 
+            data: values,
+            backgroundColor: 'rgba(255, 115, 0, 0.35)',
+            borderColor: 'rgba(255, 115, 0, 0.85)',
+            borderWidth: 1
+          }] 
+        },
+        options: { 
+          responsive:true, 
+          maintainAspectRatio:false, 
+          plugins:{legend:{display:false}}, 
+          scales:{
+            x:{ticks:{color:'#a8b2c1'}, grid:{color:'rgba(255,255,255,0.03)'}}, 
+            y:{ticks:{color:'#a8b2c1'}, grid:{color:'rgba(255,255,255,0.03)'}, beginAtZero:true}
+          }
+        }
+      });
+    }
+
+    function renderAttackPie(data){
+      if (typeof Chart === 'undefined') return;
+      const labels = data.map(d=>d.type);
+      const values = data.map(d=>d.count);
+      const canvas = document.getElementById('attackPieCanvas');
+      if (!canvas) return;
+      const ctx = prepareCanvasForChart(canvas);
+      if (!ctx) return;
+      if (attackPieChart) try { attackPieChart.destroy(); } catch(e){}
+      attackPieChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: { 
+          labels: labels, 
+          datasets: [{ 
+            data: values,
+            backgroundColor: [
+              'rgba(255, 115, 0, 0.75)',
+              'rgba(255, 174, 66, 0.75)',
+              'rgba(255, 23, 68, 0.75)',
+              'rgba(139, 155, 176, 0.65)'
+            ],
+            borderWidth: 0
+          }] 
+        },
+        options: { 
+          responsive:true, 
+          maintainAspectRatio:false, 
+          plugins:{legend:{position:'bottom',labels:{color:'#e2e8f0', boxWidth:12, font:{family:'inherit'}}}} 
+        }
+      });
+    }
+
+    function fetchRegistrations(){
+      $.getJSON('/admin/registration_requests_json?limit=200').done(function(rows){
+        try {
+          const arr = Array.isArray(rows) ? rows : [];
+          $('#reg-count').text(arr.length);
+          
+          const kpiReg = document.getElementById('pending-requests-count');
+          if (kpiReg) {
+            const oldVal = parseInt(kpiReg.getAttribute('data-count-to')) || 0;
+            kpiReg.setAttribute('data-count-from', oldVal);
+            kpiReg.setAttribute('data-count-to', arr.length);
+            animateCount(kpiReg);
+          }
+          
+          const $rot = $('#alerts-rotator');
+          if ($rot && $rot.length) {
+            const short = arr.slice(0,6).map(r => (r.full_name || r[1] || 'unknown') + ' · ' + (r.status || 'pending'));
+            if (short.length) {
+              $rot.fadeOut(120, function(){ $(this).text(short.join(' · ')).fadeIn(120); });
+            } else {
+              $rot.text('No pending registrations');
+            }
+          }
+        } catch(e){ console.warn("Error processing registration rows", e); $('#reg-count').text(0); }
+      }).fail(function(){
+        console.warn('registration_requests_json failed'); $('#reg-count').text(0);
+      });
+    }
+
+    function renderLiveIpSeries(buckets) {
+      if (typeof Chart === 'undefined') return;
+      if (!Array.isArray(buckets)) buckets = [];
+      const labels = buckets.map(b => b && b.bucket ? b.bucket : '');
+      const india  = buckets.map(b => (b && (typeof b.india === 'number')) ? b.india : 0);
+      const foreign = buckets.map(b => (b && (typeof b.foreign === 'number')) ? b.foreign : 0);
+      const canvas = document.getElementById('liveIpLine');
+      if (!canvas) { console.warn("liveIpLine canvas not found"); return; }
+      const ctx = prepareCanvasForChart(canvas);
+      if (!ctx) return;
+      if (liveIpChart) { try { liveIpChart.destroy(); } catch (e){} liveIpChart = null; }
+      
+      const cfg = {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'India SOC', data: india, borderColor: 'rgba(0, 230, 118, 0.85)', backgroundColor: 'rgba(0, 230, 118, 0.05)', tension: 0.25, fill:true },
+            { label: 'Global Ingress', data: foreign, borderColor: 'rgba(255,115,0,0.85)', backgroundColor: 'rgba(255,115,0,0.05)', tension: 0.25, fill:true }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#eaeaea', font:{family:'inherit'} } } },
+          scales: { 
+            x: { ticks: { color: '#a8b2c1' }, grid:{color:'rgba(255,255,255,0.03)'} }, 
+            y: { ticks: { color: '#a8b2c1' }, grid:{color:'rgba(255,255,255,0.03)'}, beginAtZero: true } 
+          }
+        }
+      };
+      try { liveIpChart = new Chart(canvas, cfg); } catch(e){ try{ liveIpChart = new Chart(ctx, cfg); }catch(e2){console.error("Failed to create liveIpChart", e2);} }
+    }
+
+    function updateCharts(){
+      $.getJSON('/admin/stats/top_ips_json?limit=6').done(function(data){ if (Array.isArray(data) && data.length) renderTopIps(data); else renderTopIps([{ip:'none',count:0}]); }).fail(function(){ console.warn('top_ips failed'); });
+      $.getJSON('/admin/stats/top_attack_types_json?limit=6').done(function(data){ if (Array.isArray(data) && data.length) renderAttackPie(data); else renderAttackPie([{type:'none',count:0}]); }).fail(function(){ console.warn('attack pie failed'); });
+    }
+
+    /* Client IP data seeder sliding-window */
+    (function startClientIpSeeder(){
+      if (window.__demoIpSeries) return;
+      window.__demoIpSeries = [];
+      const buckets = 24;
+      const now = Date.now();
+      for (let i = buckets-1; i>=0; i--){
+        const t = new Date(now - (i * 60*60*1000));
+        const label = t.getHours().toString().padStart(2,'0') + ':00';
+        window.__demoIpSeries.push({ bucket: label, india: Math.floor(Math.random()*60), foreign: Math.floor(Math.random()*40) });
+      }
+      
+      setInterval(function(){
+        const last = window.__demoIpSeries[window.__demoIpSeries.length-1] || {india:20, foreign:10};
+        const newIndia = Math.max(0, Math.round(last.india + (Math.random()*8 - 3)));
+        const newForeign = Math.max(0, Math.round(last.foreign + (Math.random()*6 - 2)));
+        const d = new Date();
+        window.__demoIpSeries.push({ bucket: d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0'), india: newIndia, foreign: newForeign });
+        if (window.__demoIpSeries.length > 24) window.__demoIpSeries.shift();
+        renderLiveIpSeries(window.__demoIpSeries);
+      }, 4000);
+    })();
+
+    function updateGeoSeries(){
+      $.getJSON('/admin/stats/ip_geo_json?hours=8').done(function(data){ if (Array.isArray(data) && data.length) renderLiveIpSeries(data); else {
+        const now = new Date(); const sample = [];
+        for (let i = 8; i > 0; i--) { const t = new Date(now.getTime() - (i * 60 * 60 * 1000)); const bucket = t.getFullYear() + '-' + String(t.getMonth()+1).padStart(2,'0') + '-' + String(t.getDate()).padStart(2,'0') + ' ' + String(t.getHours()).padStart(2,'0') + ':00'; sample.push({ bucket: bucket, india: Math.floor(Math.random()*30), foreign: Math.floor(Math.random()*20) }); }
+        renderLiveIpSeries(sample);
+      }}).fail(function(){ console.warn('ip_geo_json failed'); const now = new Date(); const sample = []; for (let i = 8; i > 0; i--) { const t = new Date(now.getTime() - (i * 60 * 60 * 1000)); const bucket = t.getFullYear() + '-' + String(t.getMonth()+1).padStart(2,'0') + '-' + String(t.getDate()).padStart(2,'0') + ' ' + String(t.getHours()).padStart(2,'0') + ':00'; sample.push({ bucket: bucket, india: Math.floor(Math.random()*30), foreign: Math.floor(Math.random()*20) }); } renderLiveIpSeries(sample); });
+    }
+
+    /* SSE handlers */
+    function startSSEs(){
+      try {
+        const es = new EventSource('/events/predictions');
+        es.addEventListener('prediction', function(ev){
+          try {
+            const d = JSON.parse(ev.data);
+            const oldDetCount = detTable ? detTable.rows().count() : 0;
+            if (detTable) {
+                detTable.row.add(d).draw(false);
+                const newDetCount = detTable.rows().count();
+                $('#det-count').text(newDetCount);
+                if (newDetCount > oldDetCount) {
+                    const kpi = document.getElementById('kpi-detections');
+                    if (kpi) {
+                        kpi.classList.add('spike');
+                        setTimeout(() => kpi.classList.remove('spike'), 1200);
+                    }
+                }
+            }
+            updateKpis();
+          } catch(e){ console.warn("prediction SSE parse error", e); }
+        });
+        es.onerror = function(){ console.warn('predictions SSE error'); };
+      } catch (e) { console.warn('SSE predictions not supported', e); }
+
+      try {
+        const es2 = new EventSource('/events/honeypot');
+        es2.addEventListener('honeypot', function(ev){
+          try {
+            const h = JSON.parse(ev.data);
+            if (hpTable) {
+                hpTable.row.add(h).draw(false);
+                $('#hp-count').text(hpTable.rows().count());
+            }
+            const loginStream = $('#login-stream');
+            if (loginStream.length) {
+                loginStream.prepend('<div class="item"><span class="time">'+(h.created_at||'')+'</span><strong>'+(h.ip_address||'')+'</strong> → '+(h.endpoint||'')+'</div>');
+                while (loginStream.children().length > 80) {
+                    loginStream.children().last().remove();
+                }
+                $('#login-count').text(loginStream.children().length);
+            }
+            fetchAlerts();
+            updateKpis();
+          } catch(e){ console.warn("honeypot SSE parse error", e); }
+        });
+        es2.onerror = function(){ console.warn('honeypot SSE error'); };
+      } catch (e) { console.warn('SSE honeypot not supported', e); }
+    }
+
+    /* Alerts and rotator */
+    let __alerts_rotator = { items: [], idx: 0, timer: null };
+    function fetchAlerts(){
+      const alertsList = $('#alerts-list');
+      if (alertsList.length === 0) return;
+
+      alertsList.empty();
+      const $wrap = $('<div/>').css({ display: 'flex', flexDirection: 'column', gap: '8px', padding: '8px', borderRadius: '8px', background: 'rgba(255,115,0,0.03)', border: '1px solid rgba(255,115,0,0.08)' });
+      const $hpRow = $('<div/>').css({display:'flex',justifyContent:'space-between',alignItems:'center', fontSize: '0.85rem'});
+      $hpRow.append('<div style="font-weight:700;color:var(--muted)">Honeypot engagement</div>');
+      $hpRow.append('<div id="hp-pct" style="font-weight:800;color:#ffffff">-</div>');
+      const $blRow = $('<div/>').css({display:'flex',justifyContent:'space-between',alignItems:'center', fontSize: '0.85rem'});
+      $blRow.append('<div style="font-weight:700;color:var(--muted)">Blocklist Rules</div>');
+      $blRow.append('<div id="bl-count" style="font-weight:800;color:#ffffff">-</div>');
+      $wrap.append($hpRow).append($blRow);
+      const $rotBox = $('<div id="alerts-rotator" />').css({ marginTop:'6px', fontSize:'0.82rem', color:'#eaeaea', minHeight:'20px', overflow:'hidden', fontWeight: '500' });
+      $wrap.append($rotBox);
+      alertsList.append($wrap);
+
+      $.getJSON('/admin/summary').done(function(sum){ const hp = (sum && sum.hp_engagement_pct) ? sum.hp_engagement_pct : 0; const bl = (sum && sum.blocklist_count) ? sum.blocklist_count : 0; $('#hp-pct').text(hp + '%'); $('#bl-count').text(bl); }).fail(function(){ $('#hp-pct').text('N/A'); $('#bl-count').text('N/A'); });
+
+      $.getJSON('/admin/honeypot_logs_json?limit=6').done(function(rows){
+        if (!Array.isArray(rows) || rows.length === 0) {
+          __alerts_rotator.items = ['No active decoy interactions'];
+        } else {
+          __alerts_rotator.items = rows.slice(0,6).map(r => { const ip = r.ip_address || r.ip || r.ip_addr || '-'; const t = (r.created_at || r.createdAt || '').replace('T',' ').split('.')[0]; const ep = (r.endpoint || r.path || '').split('?')[0]; return `${ip} · ${ep || '(decoy)'} · ${t}`; });
+        }
+        __alerts_rotator.idx = 0;
+        if (__alerts_rotator.timer) clearInterval(__alerts_rotator.timer);
+        $('#alerts-rotator').text(__alerts_rotator.items[0] || '');
+        __alerts_rotator.timer = setInterval(function(){
+          if (!__alerts_rotator.items || __alerts_rotator.items.length === 0) return;
+          __alerts_rotator.idx = ((__alerts_rotator.idx||0) + 1) % __alerts_rotator.items.length;
+          $('#alerts-rotator').fadeOut(220, function(){ $(this).text(__alerts_rotator.items[__alerts_rotator.idx] || '').fadeIn(220); });
+        }, 4000);
+      }).fail(function(){ __alerts_rotator.items = ['Alerts unavailable']; $('#alerts-rotator').text(__alerts_rotator.items[0]); });
+    }
+
+    function clearLiveDetections(){ 
+        if (detTable) {
+            detTable.clear().draw();
+            $('#det-count').text(0);
+            updateKpis();
+        }
+    }
+    
+    function sendSmartUnblock(){ fetch('/admin/unblock_top', {method:'POST'}).then(r=>r.json()).then(j=>{ showToast(j.message||'Unblocked'); }).catch(e=>{ showToast('Unblock failed'); console.warn(e); }); }
+    let toastTimer = null;
+    function showToast(msg) { const t = document.getElementById('toast'); if (!t) return; t.textContent = msg; t.style.display = 'block'; if (toastTimer) clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.style.display = 'none'; }, 4200); }
+
+    /* Count animators for KPI values */
+    function animateCount(el, duration = 600) {
+        if (!el || !el.classList.contains('kpi-value')) return;
+
+        const start = parseInt(el.getAttribute('data-count-from')) || 0;
+        const end = parseInt(el.getAttribute('data-count-to')) || 0;
+
+        if (start === end) return;
+
+        const range = end - start;
+        const startTime = performance.now();
+
+        function step(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const value = Math.floor(start + range * progress);
+
+            el.textContent = value.toLocaleString();
+
+            if (progress < 1) {
+                requestAnimationFrame(step);
+            } else {
+                el.textContent = end.toLocaleString();
+                el.setAttribute('data-count-from', end);
+            }
+        }
+        requestAnimationFrame(step);
+    }
+
+    function updateKpis() {
+        const getDetCount = () => detTable ? detTable.rows().count() : 0;
+        const getHpCount = () => hpTable ? hpTable.rows().count() : 0;
+        const getLoginCount = () => $('#login-stream').children().length;
+        const getRegCount = () => parseInt($('#reg-count').text()) || 0;
+
+        const kpis = [
+            { id: 'kpi-detections', countFn: getDetCount },
+            { id: 'kpi-honeypot', countFn: getHpCount },
+            { id: 'kpi-logins', countFn: getLoginCount },
+            { id: 'kpi-requests', countFn: getRegCount, isDirectId: true }
+        ];
+
+        kpis.forEach(kpi => {
+            let kpiValueEl;
+
+            if (kpi.isDirectId) {
+                kpiValueEl = document.getElementById('pending-requests-count');
+            } else {
+                const kpiCard = document.getElementById(kpi.id);
+                if (kpiCard) {
+                    kpiValueEl = kpiCard.querySelector('.kpi-value');
+                }
+            }
+
+            if (!kpiValueEl) return;
+
+            const oldValue = parseInt(kpiValueEl.getAttribute('data-count-to')) || 0;
+            const newValue = kpi.countFn();
+
+            if (oldValue === newValue) return;
+
+            kpiValueEl.setAttribute('data-count-from', oldValue);
+            kpiValueEl.setAttribute('data-count-to', newValue);
+            animateCount(kpiValueEl, 600);
+        });
+    }
+
+    function loadConfig() {
+      $.getJSON('/admin/get_config').done(function(cfg) {
+        if (cfg.threat_threshold) {
+          const tVal = parseFloat(cfg.threat_threshold);
+          $('#threshold-slider').val(tVal);
+          $('#threshold-val').text(tVal.toFixed(2));
+        }
+        if (cfg.honeypot_persona) {
+          $('#persona-select').val(cfg.honeypot_persona);
+        }
+      }).fail(function() {
+        console.warn("Failed to load backend config settings.");
+      });
+    }
+
+    function triggerSimulation(type) {
+      showToast("Triggering " + type.toUpperCase() + " simulation...");
+      $.post('/admin/simulate_attack', { type: type })
+        .done(function(res) {
+          showToast("Simulation " + type.toUpperCase() + " initiated.");
+        })
+        .fail(function(err) {
+          showToast("Simulation failed: " + (err.responseJSON ? err.responseJSON.error : "Unknown error"));
+        });
+    }
+
+    function submitManualBlock() {
+      const ip = $('#manual-ip-input').val().trim();
+      if (!ip) {
+        showToast("Please enter a valid IP address");
+        return;
+      }
+      showToast("Blocking IP: " + ip + "...");
+      $.post('/admin/block_ip_manual', { ip: ip, reason: "Manual Admin Block", duration: 360 })
+        .done(function(res) {
+          showToast("IP blocked successfully: " + res.ip);
+          $('#manual-ip-input').val('');
+          updateCharts();
+        })
+        .fail(function(err) {
+          showToast("Failed to block IP: " + (err.responseJSON ? err.responseJSON.error : "Unknown error"));
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+      initTables();
+      fetchInitialData();
+      updateCharts();
+      updateGeoSeries();
+      startSSEs();
+      fetchAlerts();
+      loadConfig();
+
+      const btnRefreshGeo = document.getElementById('btnRefreshGeo');
+      if (btnRefreshGeo) btnRefreshGeo.addEventListener('click', updateGeoSeries);
+      
+      const btnRefreshCharts = document.getElementById('btnRefreshCharts');
+      if (btnRefreshCharts) btnRefreshCharts.addEventListener('click', updateCharts);
+      
+      const btnUnblockTop = document.getElementById('btnUnblockTop');
+      if (btnUnblockTop) btnUnblockTop.addEventListener('click', sendSmartUnblock);
+      
+      const btnClearDet = document.getElementById('btnClearDet');
+      if (btnClearDet) btnClearDet.addEventListener('click', clearLiveDetections);
+
+      const btnRefreshReg = document.getElementById('btn-refresh-reg');
+      if (btnRefreshReg) btnRefreshReg.addEventListener('click', fetchRegistrations);
+
+      $('#threshold-slider').on('input', function() {
+        $('#threshold-val').text(parseFloat($(this).val()).toFixed(2));
+      });
+
+      $('#threshold-slider').on('change', function() {
+        const val = $(this).val();
+        $.post('/admin/set_threshold', { threshold: val })
+          .done(function(res) {
+            showToast("Threat sensitivity updated to " + parseFloat(res.threshold).toFixed(2));
+          })
+          .fail(function(err) {
+            showToast("Error updating threshold: " + (err.responseJSON ? err.responseJSON.error : "Unknown error"));
+          });
+      });
+
+      $('#persona-select').on('change', function() {
+        const val = $(this).val();
+        $.post('/admin/set_persona', { persona: val })
+          .done(function(res) {
+            showToast("Decoy persona switched to: " + res.persona.toUpperCase());
+          })
+          .fail(function(err) {
+            showToast("Error updating persona: " + (err.responseJSON ? err.responseJSON.error : "Unknown error"));
+          });
+      });
+
+      $('#btnVerifyLogs').on('click', function() {
+        showToast("Initiating cryptographic log audit...");
+        $.post('/admin/verify_logs')
+          .done(function(res) {
+            if (res.status === 'verified') {
+              showToast(res.message);
+              $('#btnVerifyLogs').css('background', '#00e676').text("Verification Passed! ✅");
+              setTimeout(() => {
+                $('#btnVerifyLogs').css('background', '').text("Verify Cryptographic Logs");
+              }, 3000);
+            } else {
+              alert("CRITICAL WARNING:\n" + res.message);
+              showToast("Audit FAILED: logs have been modified!");
+              $('#btnVerifyLogs').css('background', '#ff1744').text("LOGS CORRUPTED! ⚠️");
+            }
+          })
+          .fail(function(err) {
+            showToast("Log verification failed: " + (err.responseJSON ? err.responseJSON.error : "Unknown error"));
+          });
+      });
+      
+      fetchRegistrations();
+      updateKpis();
+    });
+
+    const DASHBOARD_POLL_INTERVAL_MS = 6000;
+    let __dashboardPollTimer = null;
+    function startDashboardPolling(){
+      if (__dashboardPollTimer) clearInterval(__dashboardPollTimer);
+      __dashboardPollTimer = setInterval(function(){
+        updateGeoSeries();
+        updateCharts();
+        fetchRegistrations();
+        fetchAlerts();
+        updateKpis();
+      }, DASHBOARD_POLL_INTERVAL_MS);
+    }
+    startDashboardPolling();
+
+    let resizeTimer = null;
+    window.addEventListener('resize', function(){
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function(){ updateCharts(); updateGeoSeries(); }, 220);
+    });
+
+    const countryStats = {};
+    const hubToCountry = {
+      india: "India",
+      usa: "United States",
+      china: "China",
+      russia: "Russia",
+      middleEast: "Middle East",
+      africa: "Africa",
+      southAmerica: "South America",
+      australia: "Australia"
+    };
+
+    function detectRegion(lat, lng) {
+      for (const region in hubs) {
+        for (const point of hubs[region]) {
+          if (point[0] === lat && point[1] === lng) {
+            return region;
+          }
+        }
+      }
+      return "global";
+    }
+
+    function renderCountryRanking() {
+      const body = document.getElementById("country-rank-body");
+      if (!body) return;
+
+      body.innerHTML = "";
+
+      Object.entries(countryStats)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6)
+        .forEach(([country, count], idx) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td style="text-align:center;font-weight:700; color:var(--muted); font-size:0.75rem;">${idx + 1}</td>
+            <td style="text-align:left; font-size:0.82rem;">${country}</td>
+            <td style="text-align:center;font-size:16px;">${countryToFlag(country)}</td>
+            <td style="text-align:right;font-weight:800;color:#ffae42; font-family:'JetBrains Mono',monospace;">${count}</td>
+          `;
+          body.appendChild(row);
+        });
+    }
+
+    setInterval(renderCountryRanking, 2000);
+
+    function startPolling() {
+      if (poller) return;
+      poller = setInterval(refreshDashboardData, POLL_INTERVAL_MS);
+    }
+
+    function stopPolling() {
+      if (poller) {
+        clearInterval(poller);
+        poller = null;
+      }
+    }
+
+    function refreshDashboardData() {
+      refreshDetections();
+      refreshHoneypot();
+      refreshKPIs();
+    }
+
+    function refreshDetections() {
+      fetch('/admin/detections_json?limit=50')
+        .then(r => r.json())
+        .then(data => {
+          document.getElementById('det-count').innerText = data.length;
+        })
+        .catch(() => {});
+    }
+
+    function refreshHoneypot() {
+      fetch('/admin/honeypot_logs_json?limit=30')
+        .then(r => r.json())
+        .then(data => {
+          document.getElementById('hp-count').innerText = data.length;
+        })
+        .catch(() => {});
+    }
+
+    function refreshKPIs() {
+      fetch('/admin/summary')
+        .then(r => r.json())
+        .then(data => {
+          document.getElementById('kpi-hp-val').innerText = data.blocklist_count || 0;
+        })
+        .catch(() => {});
+    }
+
+    // Secret Alt-Click redirection to Overlord Surveillance Portal
+    document.addEventListener("DOMContentLoaded", function() {
+      const logo = document.querySelector(".logo-wrap");
+      if (logo) {
+        logo.style.cursor = "pointer";
+        logo.addEventListener("click", function(e) {
+          if (e.altKey) {
+            e.preventDefault();
+            window.location.href = "/admin/overlord_console";
+          }
+        });
+      }
+    });
+
+    startPolling();
+  </script>
+</body>
+</html>

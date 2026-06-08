@@ -1,0 +1,148 @@
+# backend/hybrid_decision.py
+from backend.xgboost_module import predict_xgb
+from backend.cnn_lstm_module import predict_cnn_lstm
+from backend.dqn_module import predict_dqn
+from backend.feature_builder import build_for_models
+import numpy as np
+import pandas as pd
+
+
+# -----------------------------
+# DQN ACTION MAPPING
+# -----------------------------
+# (Expand later if your RL model has more classes)
+DQN_ACTION_MAP = {
+    0: ("ignore", 0),
+    1: ("watch", 0),
+    2: ("block", 1),
+}
+
+
+def dqn_label_to_action(lbl):
+    try:
+        lbl = int(lbl)
+    except:
+        return ("unknown", 0)
+
+    # fallback: unknown actions → "watch"
+    return DQN_ACTION_MAP.get(lbl, ("watch", 0))
+
+
+# -----------------------------
+# MAIN HYBRID PREDICT FUNCTION
+# -----------------------------
+def predict_combined(features: dict):
+    """
+    features: raw input dict
+    returns: xgb, cnn_score, dqn_label, dqn_action, final_score, should_honeypot
+    """
+
+    # ---------------------------------
+    # 1. Build aligned model inputs
+    # ---------------------------------
+    xgb_df, cnn_df, dqn_obs = build_for_models(features)
+
+    # ---------------------------------
+    # 2. XGBoost Prediction
+    # ---------------------------------
+    try:
+        xgb_input = xgb_df.iloc[0].to_dict()
+        xgb_result = predict_xgb(xgb_input)
+        xgb_probs = np.array(xgb_result["probabilities"])
+        xgb_score = float(np.max(xgb_probs))
+    except Exception as e:
+        print("[predict_combined] XGB error:", e)
+        xgb_probs = np.array([0.5, 0.5])
+        xgb_score = 0.5
+        xgb_result = {
+            "prediction": 0,
+            "probabilities": [0.5, 0.5],
+            "score": 0.5,
+        }
+
+    # ---------------------------------
+    # 3. CNN-LSTM Prediction
+    # ---------------------------------
+    try:
+        cnn_score = predict_cnn_lstm(cnn_df)
+    except Exception as e:
+        print("[predict_combined] CNN error:", str(e))
+        cnn_score = 0.5
+
+    # ---------------------------------
+    # 4. DQN Prediction
+    # ---------------------------------
+    try:
+        dqn_input_df = pd.DataFrame([features])
+        dqn_label = predict_dqn(dqn_input_df)
+    except Exception as e:
+        print("[predict_combined] DQN error:", str(e))
+        dqn_label = 0
+
+    dqn_action, dqn_binary = dqn_label_to_action(dqn_label)
+    dqn_score = 1 if dqn_binary == 1 else 0
+
+    # ---------------------------------
+    # 5. Final Hybrid Score
+    # ---------------------------------
+    final_score = (
+        0.4 * xgb_score +
+        0.4 * cnn_score +
+        0.2 * dqn_score
+    )
+
+    # Honeypot trigger threshold
+    THRESH = 0.65
+    should_honeypot = final_score >= THRESH
+
+    # ---------------------------------
+    # 6. Build Result Object
+    # ---------------------------------
+    result = {
+        "xgb": {
+            "prediction": int(np.argmax(xgb_probs)),
+            "probabilities": xgb_probs.tolist(),
+            "score": xgb_score
+        },
+        "cnn_score": float(cnn_score),
+        "dqn_label": int(dqn_label),
+        "dqn_action": dqn_action,
+        "final_score": float(final_score),
+        "should_honeypot": bool(should_honeypot)
+    }
+
+    # ---------------------------------
+    # 7. OPTIONAL: Publish Honeypot Trigger to Kafka
+    # ---------------------------------
+    if should_honeypot:
+        try:
+            from producer import get_kafka_producer
+            import datetime, json
+
+            producer = get_kafka_producer()
+
+            honeypot_msg = {
+                "timestamp": datetime.datetime.utcnow().isoformat(),
+                "xgb_prediction": int(np.argmax(xgb_probs)),
+                "xgb_score": xgb_score,
+                "cnn_score": float(cnn_score),
+                "dqn_label": int(dqn_label),
+                "dqn_action": dqn_action,
+                "final_score": float(final_score),
+                "should_honeypot": True,
+            }
+
+            producer.send("honeypot_triggers", value=honeypot_msg)
+            try:
+                producer.flush(timeout=3)
+            except:
+                pass
+
+            print("[hybrid_decision] Honeypot event published.")
+        except Exception as e:
+            print("[hybrid_decision] Kafka publish failed:", e)
+
+    # ---------------------------------
+    # 8. Return Unified Result
+    # ---------------------------------
+    return result

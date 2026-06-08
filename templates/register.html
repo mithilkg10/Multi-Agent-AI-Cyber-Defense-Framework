@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ABHEDYA — Access Request</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #03060a;
+      --panel: rgba(10, 15, 24, 0.7);
+      --panel-border: rgba(255, 115, 0, 0.25);
+      --accent: #ff7300;
+      --accent-glow: rgba(255, 115, 0, 0.45);
+      --accent-2: #ffae42;
+      --muted: #8b9bb0;
+      --foreground: #f0f4f9;
+      --glass-bg: rgba(10, 15, 24, 0.82);
+      --glass-blur: blur(14px);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      font-family: "Plus Jakarta Sans", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Hexagon Canvas Background */
+    canvas.bg {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      opacity: 0.85;
+    }
+
+    .card-container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 440px;
+      animation: formFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes formFadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      padding: 36px;
+      border-radius: 20px;
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      color: #fff;
+      transition: border-color 0.3s ease;
+    }
+
+    .card:hover {
+      border-color: rgba(255, 115, 0, 0.4);
+    }
+
+    .card h2 {
+      color: var(--accent-2);
+      margin: 0 0 8px;
+      font-size: 1.65rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .subtext {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    /* Form controls */
+    .form-group {
+      position: relative;
+      margin-bottom: 18px;
+    }
+
+    .form-group input, .form-group textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 115, 0, 0.15);
+      background: rgba(0, 0, 0, 0.4);
+      color: #fff;
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.25s ease;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .form-group textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .form-group input:focus, .form-group textarea:focus {
+      border-color: var(--accent-2);
+      box-shadow: 0 0 12px rgba(255, 174, 66, 0.15), inset 0 2px 4px rgba(0,0,0,0.1);
+      background: rgba(0, 0, 0, 0.6);
+    }
+
+    .form-group label {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 0.9rem;
+      pointer-events: none;
+      transition: all 0.25s ease;
+      padding: 0 4px;
+    }
+
+    .form-group.textarea-group label {
+      top: 24px;
+    }
+
+    /* Float labels */
+    .form-group input:focus ~ label,
+    .form-group input:not(:placeholder-shown) ~ label,
+    .form-group textarea:focus ~ label,
+    .form-group textarea:not(:placeholder-shown) ~ label {
+      top: 0;
+      font-size: 0.75rem;
+      color: var(--accent-2);
+      font-weight: 700;
+      background: #090f19;
+      border-radius: 4px;
+      transform: translateY(-50%) scale(0.95);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      color: #03060a;
+      font-weight: 800;
+      font-size: 1rem;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 6px 20px var(--accent-glow);
+      transition: all 0.25s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 26px rgba(255, 115, 0, 0.7);
+      filter: brightness(1.1);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0.5px);
+    }
+
+    .footer {
+      margin-top: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid rgba(255, 115, 0, 0.1);
+      padding-top: 18px;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--accent-2);
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.85rem;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255, 115, 0, 0.08);
+      border-color: var(--accent-2);
+      box-shadow: 0 0 10px rgba(255, 174, 66, 0.15);
+    }
+
+    .msg {
+      margin-top: 14px;
+      color: var(--accent-2);
+      font-size: 0.9rem;
+      font-weight: 700;
+      background: rgba(255, 174, 66, 0.08);
+      border: 1px solid rgba(255, 174, 66, 0.2);
+      padding: 10px 14px;
+      border-radius: 8px;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="honeycomb" class="bg"></canvas>
+
+  <div class="card-container">
+    <div class="card">
+      <h2>Access Registration</h2>
+      <div class="subtext">
+        Please complete the authorization request. A System Administrator will review and activate your login session.
+      </div>
+
+      <form method="POST" action="/register">
+        <div class="form-group">
+          <input type="text" name="full_name" placeholder=" " required autocomplete="off">
+          <label>Full Name</label>
+        </div>
+
+        <div class="form-group">
+          <input type="text" name="department" placeholder=" " required autocomplete="off">
+          <label>Department / Office</label>
+        </div>
+
+        <div class="form-group textarea-group">
+          <textarea name="remarks" placeholder=" "></textarea>
+          <label>Access Justification Remarks</label>
+        </div>
+
+        <button type="submit" class="btn-primary">
+          Send Access Request
+        </button>
+      </form>
+
+      {% if message %}
+        <div class="msg">{{ message }}</div>
+      {% endif %}
+
+      <div class="footer">
+        <a href="{{ url_for('login') }}" class="btn-ghost">
+          ← Back to Login
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* Hexagon mesh background */
+    const canvas = document.getElementById("honeycomb");
+    const ctx = canvas.getContext("2d");
+    function fit() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    fit();
+    window.addEventListener('resize', fit);
+
+    const hex = 18;
+    const h = Math.sqrt(3) * hex;
+    const w = hex * 1.8;
+    
+    let pts = Array.from({length: 8}, () => ({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      p: Math.random() * Math.PI * 2,
+      s: 0.005 + Math.random() * 0.008
+    }));
+
+    function drawHex(x, y, glow) {
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const a = Math.PI / 3 * i;
+        const px = x + hex * Math.cos(a);
+        const py = y + hex * Math.sin(a);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = `rgba(255, 115, 0, ${0.05 + glow * 0.2})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    function anim() {
+      ctx.fillStyle = '#03060a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      for (let y = 0; y < canvas.height + h; y += h * 1.1) {
+        for (let x = 0; x < canvas.width + w; x += w * 1.1) {
+          let gx = x + ((Math.floor(y / h) % 2) ? hex * 0.75 : 0);
+          let glow = 0;
+          pts.forEach(p => {
+            const dx = gx - p.x;
+            const dy = y - p.y;
+            const d = dx * dx + dy * dy;
+            if (d < 20000) {
+              glow += (1 - Math.sqrt(d) / 141) * 0.8;
+            }
+          });
+          drawHex(gx, y, Math.min(glow, 1.1));
+        }
+      }
+
+      pts.forEach(p => {
+        p.p += p.s;
+        p.x += Math.sin(p.p) * 0.4;
+        p.y += Math.cos(p.p) * 0.4;
+        if (p.x < 0) p.x = canvas.width;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y > canvas.height) p.y = 0;
+      });
+      
+      requestAnimationFrame(anim);
+    }
+    anim();
+  </script>
+</body>
+</html>

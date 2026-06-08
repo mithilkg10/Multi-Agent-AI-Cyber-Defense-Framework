@@ -1,0 +1,342 @@
+--- SLIDE ppt/slides/slide1.xml ---
+B.Tech Final Project Presentation on
+OceanClear
+ : AI-Based Underwater Image Enhancement System
+Mentor  : DR YOGESH KM
+Asst. Professor
+Dept. of CSE, MSRUAS, Bengaluru
+Group No.  :PB34
+{9F6D2E3C-A018-442B-BF50-C8C78C53ADB0}
+Registration no.
+Student Name
+SIMRAN SHRAMA 
+22ETIS411036
+PRATHYUSHA S
+22ETIS411026
+NAVYA CP
+22ETIS411303
+THARUN KUMAR LM
+22ETIS411041
+Department  of Computer Science and Engineering
+
+--- SLIDE ppt/slides/slide2.xml ---
+Outline
+Problem Statement & Motivation
+Objectives
+Existing System
+Proposed System
+System Architecture
+Implementation and Testing
+Result Analysis and Discussions
+Live Demonstration 
+Conclusion
+Future Scope
+References
+
+--- SLIDE ppt/slides/slide3.xml ---
+Problem Statement and Motivation
+Underwater images suffer from multiple distortions:
+Color distortion
+ (loss of red, dominance of blue/green) 
+Low contrast
+ due to light attenuation 
+Haze and blur
+ caused by scattering 
+Noise
+ from suspended particles
+ Main Causes:
+Light absorption (red absorbed quickly) 
+Light scattering (reduces clarity)
+
+--- SLIDE ppt/slides/slide4.xml ---
+Problem Statement and Motivation
+Motivation:
+Critical for applications such as: 
+Marine ecosystem monitoring 
+Underwater robotics and navigation 
+Scientific imaging and surveillance 
+Traditional enhancement techniques lack adaptability to complex underwater conditions 
+
+--- SLIDE ppt/slides/slide5.xml ---
+Objectives
+To identify the major challenges in underwater images such as color distortion, low contrast, and reduced visibility caused by light absorption and scattering in water.
+To analyze existing image enhancement techniques and machine learning approaches used for improving underwater image quality.
+To develop a machine learning-based model that enhances underwater images by improving color balance, contrast, and visibility.
+To evaluate the performance of the proposed model using image quality metrics such as PSNR and SSIM by comparing original and enhanced images.
+
+--- SLIDE ppt/slides/slide6.xml ---
+Existing System
+{9B3D1C26-BEBA-40EB-B880-04AE644533D2}
+Ref
+Title & Year
+Methodology
+Dataset
+Limitations
+Observations
+[1]
+Deep Underwater Image Enhancement (UWCNN), 2018
+CNN-based model trained on synthetic underwater images
+Synthetic underwater dataset
+Limited real-world dataset usage
+CNN effectively improves color correction and visibility in underwater images. 
+[2]
+UWGAN: Underwater GAN for Real-World Enhancement, 2019
+Generative Adversarial Network (GAN) with U-Net architecture
+Synthetic underwater dataset
+Requires high computational power
+GAN generates realistic underwater images and restores color distortions effectively. 
+[3]
+Deep SESR for Underwater Enhancement and Super-Resolution, 2020
+Residual network with GAN for simultaneous enhancement and super-
+resolutioN
+UFO-120 dataset
+Complex training process
+Improves image sharpness, color correction, and resolution simultaneously.
+[4]
+UIEC²-Net: CNN-based Underwater Image Enhancement, 2021
+CNN using dual color spaces for enhancement
+UIEB dataset
+Limited generalization in extreme conditions
+Achieves good color restoration and contrast improvement in underwater images. 
+[5]
+SGUIE-Net: Semantic Attention Guided Enhancement, 2022
+Attention-based CNN with semantic region guidance
+Multiple underwater datasets
+Requires labeled semantic information
+Improves detail restoration and region-based enhancement. 
+
+--- SLIDE ppt/slides/slide7.xml ---
+{9B3D1C26-BEBA-40EB-B880-04AE644533D2}
+Ref
+Title & Year
+Methodology
+Dataset
+Limitations
+Observations
+[6]
+FE-GAN: Fast and Efficient Underwater Image Enhancement, 2022
+Conditional GAN architecture
+UIEB dataset
+Training instability in GAN models
+Provides efficient enhancement with improved generalization performance. 
+[7]
+Zero-Shot Underwater Image Enhancement Network, 2023
+Zero-shot deep learning model with level adjustment
+Real underwater images
+Performance depends on scene conditions
+Removes haze and corrects color distortion without paired training data. 
+[8]
+MuLA-GAN: Multi-Level Attention GAN, 2023
+GAN with multi-level attention mechanism
+UIEB dataset
+High model complexity
+Achieves better PSNR and SSIM compared to earlier enhancement models. 
+[9]
+Autoencoder-based Deep Learning Enhancement, 2024
+Deep autoencoder architecture
+Multiple underwater datasets
+Limited feature representation for complex scenes
+Reduces blue/green color distortion and improves visual quality. 
+[10]
+Ensemble Deep Learning for Underwater Image Enhancement, 2024
+Combination of spatial and deep learning approaches
+UIEB and EUVP datasets
+Higher computational cost
+Improves brightness, structure preservation, and contrast. 
+
+--- SLIDE ppt/slides/slide8.xml ---
+Existing System
+SUMMARY OF EXISTING SYSTEM
+Existing methods focus mainly on 
+color correction or contrast enhancement
+, but fail to address all underwater distortions.
+Many models require 
+large datasets and high computational power
+.
+Some methods are trained only on 
+synthetic datasets
+, reducing real-world performance.
+There is a need for an 
+efficient machine learning model that improves image quality while maintaining structural details in real underwater environments
+.
+
+--- SLIDE ppt/slides/slide9.xml ---
+Proposed System
+OceanClear
+ is a 
+deep learning-based framework
+ for underwater image enhancement that learns mappings between degraded and high-quality images.
+Workflow:
+Input: Distorted underwater image 
+Preprocessing: 
+Resizing (256×256) 
+Normalization 
+Noise removal 
+Model Training using 
+UIEB dataset
+Output: Enhanced image 
+
+--- SLIDE ppt/slides/slide10.xml ---
+Proposed System
+Key Features:
+Handles 
+multiple distortions simultaneously
+Improves: 
+Color correction 
+Contrast 
+Visibility 
+Works on 
+real-world datasets
+Advantages:
+Better accuracy 
+Automatic feature learning 
+Scalable for future applications
+
+--- SLIDE ppt/slides/slide11.xml ---
+System Architecture/Block Diagram
+
+--- SLIDE ppt/slides/slide12.xml ---
+System Architecture
+Dataset Collection
+Underwater image datasets such as UIEB(Underwater Image Enhancement Benchmark)are collected to train and test the enhancement model under different underwater conditions.
+Image Preprocessing
+Resize Images : Images are resized to a fixed dimension (e.g., 256×256) to ensure uniform input for the model.
+Noise Removal : Filtering techniques are applied to remove noise caused by underwater particles and lighting conditions.
+Normalization : Pixel values are scaled between 0 and 1 to improve training efficiency and model performance.
+
+--- SLIDE ppt/slides/slide13.xml ---
+System Architecture
+Model layer 
+CNN, Autoencoder and U-Net 
+deep learning model is used to learn image features and enhance underwater images by improving contrast and color balance.
+Evaluation
+The enhanced images are compared with original images using PSNR and SSIM metrics to measure improvement in image quality. Based on this score best model is selected
+Output Layer
+Generate enhanced image using the best model
+
+--- SLIDE ppt/slides/slide14.xml ---
+Implementation and Testing Approach
+Programming Language: 
+Python
+Frameworks: 
+PyTorch
+Tools: 
+VS Code
+Deployment: 
+Streamlit
+ Web Application
+Dataset Details:
+Dataset: 
+UIEB (Underwater Image Enhancement Benchmark)
+Total images: 
+950
+890 paired (input + reference) 
+60 challenging images 
+Image size: 
+Resized to 256 × 256
+
+--- SLIDE ppt/slides/slide15.xml ---
+Implementation and Testing Approach
+Model Selection
+CNN → Moderate enhancement 
+Autoencoder → Better noise reduction 
+U-Net → Superior detail preservation
+Performance Evaluation
+{9B3D1C26-BEBA-40EB-B880-04AE644533D2}
+MODEL
+PSNR
+SSIM
+CNN
+18.54
+0.807
+AUTOENCODER
+17.49
+0.591
+U-NET
+19.72
+0.844
+
+--- SLIDE ppt/slides/slide16.xml ---
+Implementation and Testing Approach
+Graphical Analysis
+U-Net consistently outperforms CNN and Autoencoder 
+Higher PSNR → Better image reconstruction 
+Higher SSIM → Better perceptual quality
+
+--- SLIDE ppt/slides/slide17.xml ---
+Result Analysis and Discussions
+U-Net achieved the highest PSNR (19.72) and SSIM (0.844), showing superior enhancement performance. 
+CNN provided moderate enhancement with acceptable image reconstruction quality. 
+Autoencoder reduced underwater noise effectively but preserved fewer texture details. 
+Enhanced outputs showed better visibility, improved colour balance, and higher contrast compared to original underwater images. 
+Experimental results prove that deep learning models perform better than traditional underwater enhancement techniques.
+
+--- SLIDE ppt/slides/slide18.xml ---
+Result Analysis and Discussions
+
+--- SLIDE ppt/slides/slide19.xml ---
+Result Analysis and Discussions
+
+--- SLIDE ppt/slides/slide20.xml ---
+Sustainable Development Goals(SDG)
+{9B3D1C26-BEBA-40EB-B880-04AE644533D2}
+SDG No.
+SDG Goal
+Description / Justification
+SDG 14
+Life Below Water
+The project helps improve underwater image quality, which supports monitoring of marine ecosystems, coral reefs, and underwater biodiversity.
+SDG 9
+Industry, Innovation and Infrastructure
+The use of machine learning for underwater image enhancement promotes technological innovation and supports advanced research in marine technology and imaging systems.
+SDG 13
+Climate Action
+Enhanced underwater images can help researchers monitor ocean conditions and environmental changes, contributing to better climate and marine ecosystem studies.
+
+--- SLIDE ppt/slides/slide21.xml ---
+Live Demonstration
+https://oceanclear-18332670789.us-central1.run.app/
+
+--- SLIDE ppt/slides/slide22.xml ---
+Conclusion
+ Created a deep learning-based underwater image enhancement framework based on the UIEB dataset, which enhances color balance, contrast, and noise removal with the help of effective preprocessing methods.
+ Applied and contrasted CNN, Autoencoder, and U-Net models. 
+ Compared performance based on PSNR and SSIM, and quantitative and visual outcomes indicated a significant improvement, even with difficult underwater images in the real world.
+
+--- SLIDE ppt/slides/slide23.xml ---
+Future Scope
+Potential future enhancement focus would be on the investigation of deeper learning methods used to develop a smaller architecture to run on small-scale portable devices as well as on systems used to operate in a lower power underwater environment. Lightweight models would enable deployment in underwater drones and portable marine monitoring systems.
+Advanced artificial intelligence techniques such as
+:
+  Generative Adversarial Networks (GANs) 
+  Vision Transformers
+  Diffusion Models  
+  Reinforcement Learning 
+can be explored to further improve underwater image restoration and visual quality. 
+
+--- SLIDE ppt/slides/slide24.xml ---
+R
+eferences
+1. Anwar, S., Li, C., & 
+Porikli
+, F., “Deep Underwater Image Enhancement,” 
+arXiv
+ preprint arXiv:1807.03528, 2018.
+2. Fabbri, C., Islam, M. J., & Sattar, J., “Enhancing Underwater Imagery using Generative Adversarial Networks,” IEEE International Conference on Robotics and Automation (ICRA), 2019.
+3. Islam, M. J., Xia, Y., & Sattar, J., “Fast Underwater Image Enhancement for Improved Visual Perception,” IEEE Robotics and Automation Letters, 2020.
+4. Li, C., Guo, J., Guo, C., & Cong, R., “Underwater Image Enhancement Benchmark (UIEB) and Water-Net,” IEEE Transactions on Image Processing, 2021.
+5. Guo, C., Li, C., Guo, J., Cong, R., Fu, H., & Hou, J., “Emerging from Water: Underwater Image 
+Color
+ Correction Based on Weakly Supervised Learning,” IEEE Signal Processing Letters, 2022.
+
+--- SLIDE ppt/slides/slide25.xml ---
+R
+eferences
+6. Peng, Y., Cao, K., & Zhang, J., “SGUIE-Net: Semantic Attention Guided Underwater Image Enhancement,” IEEE Transactions on Multimedia, 2022.
+7. Li, Z., Yang, Y., & Chen, H., “Zero-Shot Underwater Image Enhancement Using Deep Learning,” IEEE Access, 2023.
+8. Zhao, X., Zhang, Y., & Wang, H., “MuLA-GAN: Multi-Level Attention GAN for Underwater Image Enhancement,” IEEE Transactions on Circuits and Systems for Video Technology, 2023.
+9. Kumar, A., Singh, P., & Sharma, R., “Deep Autoencoder Based Underwater Image Enhancement,” Journal of Visual Communication and Image Representation, 2024.
+10. Zhang, L., Chen, Y., & Li, H., “Hybrid Deep Learning Framework for Underwater Image Enhancement,” Pattern Recognition Letters, 2025.
+
+--- SLIDE ppt/slides/slide26.xml ---
+Thank You

@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "full_name": "MITHIL K GOWDA",
+    "department": "ise",
+    "remarks": "",
+    "status": "rejected",
+    "request_time": "2025-09-29 16:34:54"
+  },
+  {
+    "id": 2,
+    "full_name": "MITHIL K GOWDA",
+    "department": "ise",
+    "remarks": "",
+    "status": "rejected",
+    "request_time": "2025-09-29 16:38:59"
+  },
+  {
+    "id": 3,
+    "full_name": "MITHIL K GOWDA",
+    "department": "ise",
+    "remarks": "",
+    "status": "approved",
+    "request_time": "2025-09-29 16:43:23"
+  },
+  {
+    "id": 4,
+    "full_name": "MITHIL K GOWDA",
+    "department": "ise",
+    "remarks": "",
+    "status": "approved",
+    "request_time": "2025-10-17 18:41:22"
+  },
+  {
+    "id": 5,
+    "full_name": "DIK",
+    "department": "CSE",
+    "remarks": "",
+    "status": "rejected",
+    "request_time": "2025-10-18 17:43:03"
+  }
+]

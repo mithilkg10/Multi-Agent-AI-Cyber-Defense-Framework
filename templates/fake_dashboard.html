@@ -1,0 +1,1337 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ABHEDYA — Admin Dashboard</title> <!-- Match title for deception -->
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  
+  <!-- Modern Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet Map & DataTables CSS -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    :root {
+      --bg: #03060a;
+      --panel: rgba(10, 15, 24, 0.72);
+      --panel-border: rgba(255, 115, 0, 0.15);
+      --accent: #ff7300;
+      --accent-glow: rgba(255, 115, 0, 0.35);
+      --accent-2: #ffae42;
+      --muted: #8b9bb0;
+      --foreground: #f0f4f9;
+      --glass-bg: rgba(10, 15, 24, 0.8);
+      --glass-blur: blur(14px);
+      --success: #00e676;
+      --danger: #ff1744;
+      --warning: #ffb300;
+      --kpi-bg: rgba(255, 115, 0, 0.03);
+    }
+
+    /* Reset & Scrollbar */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 115, 0, 0.3) rgba(0, 0, 0, 0.2);
+    }
+    
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 115, 0, 0.3);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--accent);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--foreground);
+      font-family: "Plus Jakarta Sans", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* Honeycomb Background Overlay */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'><defs><pattern id='p' x='0' y='0' width='40' height='34' patternUnits='userSpaceOnUse'><path d='M20 0 L40 10 L40 24 L20 34 L0 24 L0 10 Z' fill='none' stroke='%23ff7300' stroke-opacity='0.02' stroke-width='1'/></pattern></defs><rect width='100%' height='100%' fill='url(%23p)'/></svg>");
+      opacity: 0.25;
+      mix-blend-mode: overlay;
+    }
+
+    /* HEADER */
+    header {
+      position: sticky;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 84px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      background: rgba(3, 6, 10, 0.85);
+      box-shadow: 0 6px 30px rgba(0, 0, 0, 0.6);
+      z-index: 2200;
+      backdrop-filter: var(--glass-blur);
+      border-bottom: 1px solid var(--panel-border);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-wrap {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 115, 0, 0.08);
+      border: 1px solid rgba(255, 115, 0, 0.2);
+      box-shadow: 0 0 15px rgba(255, 115, 0, 0.15);
+    }
+
+    .title {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .title .brand {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 0.5px;
+      text-shadow: 0 0 15px rgba(255, 115, 0, 0.15);
+    }
+
+    .title .tag {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 2px;
+      font-weight: 550;
+    }
+
+    .admin-info {
+      text-align: right;
+      font-size: 0.85rem;
+    }
+
+    .admin-info strong {
+      color: var(--accent-2);
+      font-weight: 700;
+    }
+
+    .admin-info .small {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .home-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      text-decoration: none;
+      color: #03060a;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      box-shadow: 0 4px 16px var(--accent-glow);
+      transition: all 0.2s ease;
+    }
+
+    .home-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(255, 115, 0, 0.65);
+    }
+
+    /* MAP CONTAINER (DUPLICATED FOR AUTHENTICITY) */
+    #threat-map-card {
+      position: relative;
+      width: 100vw;
+      height: 480px;
+      margin-left: calc(-50vw + 50%);
+      margin-right: calc(-50vw + 50%);
+      background: #020406;
+      border-bottom: 1px solid var(--panel-border);
+      overflow: hidden;
+      z-index: 5;
+    }
+
+    #world-map {
+      width: 100%;
+      height: 100%;
+    }
+
+    #threat-map-card .card-title {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1200;
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--accent-2);
+      background: rgba(8, 12, 20, 0.8);
+      border: 1px solid var(--panel-border);
+      padding: 8px 16px;
+      border-radius: 8px;
+      backdrop-filter: blur(8px);
+      pointer-events: none;
+    }
+
+    /* MAP METADATA ROW */
+    #map-info-container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 20px;
+      margin: -24px auto 32px;
+      max-width: 900px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .info-card {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 16px;
+      color: #eaeaea;
+      font-size: 0.85rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    .legend-card {
+      width: 240px;
+    }
+
+    .info-card h3 {
+      margin-bottom: 10px;
+      color: var(--accent-2);
+      font-size: 0.9rem;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .info-card div {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .dot.gold { background: #ffcc66; box-shadow: 0 0 8px #ffcc66; }
+    .dot.red { background: #ff3333; box-shadow: 0 0 8px #ff3333; }
+    .dot.amber { background: #ff8c1a; box-shadow: 0 0 8px #ff8c1a; }
+
+    #map-info-container table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    #map-info-container th {
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255, 115, 0, 0.2);
+    }
+
+    #map-info-container td {
+      padding: 6px 4px;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+      font-weight: 600;
+    }
+
+    /* KPI STATS STRIP */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      max-width: 1400px;
+      margin: 0 auto 24px;
+      padding: 0 20px;
+      z-index: 10;
+      position: relative;
+    }
+
+    .kpi-card {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      padding: 16px 20px;
+      border-radius: 12px;
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+      display: flex;
+      flex-direction: column;
+      transition: all 0.3s ease;
+    }
+
+    .kpi-card:hover {
+      border-color: rgba(255, 115, 0, 0.3);
+      transform: translateY(-1.5px);
+    }
+
+    .kpi-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .kpi-value {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--accent-2);
+      margin-top: 6px;
+      font-family: "JetBrains Mono", monospace;
+    }
+
+    .kpi-card.spike {
+      background: linear-gradient(135deg, rgba(255, 23, 68, 0.12), rgba(255, 115, 0, 0.05));
+      border-color: var(--danger);
+      box-shadow: 0 0 20px rgba(255, 23, 68, 0.35);
+    }
+
+    /* SIDEBAR NAVIGATION */
+    .sidebar {
+      position: fixed;
+      top: 84px;
+      left: -320px;
+      width: 320px;
+      height: calc(100% - 84px);
+      background: rgba(6, 10, 15, 0.98);
+      border-right: 1px solid var(--panel-border);
+      padding: 24px;
+      z-index: 3000;
+      transition: left 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow-y: auto;
+      backdrop-filter: blur(20px);
+      box-shadow: 10px 0 40px rgba(0, 0, 0, 0.8);
+    }
+
+    .sidebar.open {
+      left: 0;
+    }
+
+    .sidebar-toggle {
+      position: fixed;
+      top: 98px;
+      right: 24px;
+      z-index: 6000;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      color: #03060a;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 800;
+      font-family: inherit;
+      font-size: 0.85rem;
+      border: none;
+      box-shadow: 0 6px 18px var(--accent-glow);
+      transition: all 0.2s ease;
+    }
+
+    .sidebar-toggle:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    .sidebar h3 {
+      color: var(--accent-2);
+      font-size: 1.1rem;
+      font-weight: 800;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid rgba(255, 115, 0, 0.15);
+      padding-bottom: 10px;
+    }
+
+    .menu-btn {
+      display: block;
+      width: 100%;
+      background: transparent;
+      border: 1px solid transparent;
+      color: #eaeaea;
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 0.95rem;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 8px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    .menu-btn:hover {
+      background: rgba(255, 115, 0, 0.08);
+      border-color: rgba(255, 115, 0, 0.25);
+      color: var(--accent-2);
+      padding-left: 20px;
+    }
+
+    /* CONTAINER LAYOUT */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto 50px;
+      padding: 0 20px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .left {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .panel {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+
+    .panel h2 {
+      color: #ffffff;
+      font-size: 1.1rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    /* STREAMS */
+    .stream {
+      height: 380px;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 115, 0, 0.05);
+      margin-top: 12px;
+    }
+
+    .stream .item {
+      padding: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+      font-size: 0.85rem;
+      color: #cbd5e1;
+    }
+
+    .stream .item strong {
+      font-family: "JetBrains Mono", monospace;
+      color: var(--accent-2);
+    }
+
+    .stream .time {
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-family: "JetBrains Mono", monospace;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .right {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      padding: 20px;
+      border-radius: 16px;
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+
+    .metric {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--accent-2);
+      font-family: "JetBrains Mono", monospace;
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .btn {
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      color: #03060a;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.85rem;
+      box-shadow: 0 4px 12px var(--accent-glow);
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    /* CHART WRAPPERS */
+    .chart-wrap {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 10px;
+      padding: 12px;
+      border: 1px solid rgba(255, 115, 0, 0.05);
+      margin-top: 14px;
+      min-height: 180px;
+      position: relative;
+    }
+
+    .chart-wrap canvas {
+      display: block;
+      width: 100% !important;
+      height: 220px !important;
+    }
+
+    /* TABLES STYLE MAPPINGS */
+    .dataTables_wrapper .dataTables_scroll {
+      overflow-x: auto;
+      max-height: 320px;
+    }
+
+    table.dataTable {
+      width: 100% !important;
+      border-collapse: collapse !important;
+    }
+
+    table.dataTable thead th {
+      background: #090f19 !important;
+      color: var(--accent-2) !important;
+      font-weight: 700 !important;
+      font-size: 0.78rem !important;
+      text-transform: uppercase !important;
+      border-bottom: 2px solid var(--panel-border) !important;
+      padding: 10px 12px !important;
+    }
+
+    table.dataTable tbody td {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
+      padding: 10px 12px !important;
+      color: #e2e8f0 !important;
+      font-size: 0.85rem !important;
+    }
+
+    table.dataTable tbody tr:hover td {
+      background-color: rgba(255, 115, 0, 0.05) !important;
+    }
+
+    #sidebar-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      z-index: 2500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      backdrop-filter: blur(4px);
+    }
+
+    body.menu-open #sidebar-overlay {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    @media (max-width: 1100px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      .kpi-strip {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      #map-info-container {
+        flex-direction: column;
+        align-items: center;
+        margin-top: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="sidebar-overlay"></div>
+  
+  <header>
+    <div class="header-left">
+      <div class="logo-wrap" aria-hidden="true">
+        <svg width="36" height="36" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="lg" x1="0" x2="1">
+              <stop offset="0" stop-color="#ff7a29"/>
+              <stop offset="1" stop-color="#ffae42"/>
+            </linearGradient>
+          </defs>
+          <path d="M32 4 L54 12 L54 30 C54 46 44 57 32 60 C20 57 10 46 10 30 L10 12 Z" fill="url(#lg)"/>
+        </svg>
+      </div>
+      <div class="title">
+        <div class="brand">ABHEDYA</div>
+        <div class="tag">Adaptive AI Cyber Defense Operations</div>
+      </div>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:16px;">
+      <a href="http://127.0.0.1:5000/" class="home-btn" title="Sign out of operations">
+        Logout
+      </a>
+      <div class="admin-info">
+        <div><strong>{{ user|default('admin') }}</strong></div>
+        <div class="small">Security Analyst</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- GLOBAL THREAT MAP DECOY -->
+  <div id="threat-map-card">
+    <div class="card-title">Live Global Threat Activity</div>
+    <div id="world-map"></div>
+  </div>
+
+  <!-- MAP META INFO DECOY -->
+  <div id="map-info-container">
+    <div class="info-card legend-card">
+      <h3>Telemetry Legend</h3>
+      <div><span class="dot gold"></span> SOC Target Node (India)</div>
+      <div><span class="dot red"></span> Severe Threat (Hostile)</div>
+      <div><span class="dot amber"></span> Standard Ingress Log</div>
+    </div>
+
+    <div class="info-card legend-card" style="width: 380px;">
+      <h3>Threat Source Distribution</h3>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 30px;">#</th>
+            <th style="text-align: left;">Region / Origin</th>
+            <th style="text-align: center; width: 60px;">Flag</th>
+            <th style="text-align: right; width: 80px;">Vectors</th>
+          </tr>
+        </thead>
+        <tbody id="country-rank-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- KPI METRICS STRIP DECOY -->
+  <div class="kpi-strip">
+    <div class="kpi-card" id="kpi-detections">
+      <div class="kpi-label">Live Detections</div>
+      <div class="kpi-value" id="kpi-det-val" data-count-from="0" data-count-to="0">0</div>
+    </div>
+
+    <div class="kpi-card" id="kpi-honeypot">
+      <div class="kpi-label">Decoy Redirections</div>
+      <div class="kpi-value" id="kpi-hp-val" data-count-from="0" data-count-to="0">0</div>
+    </div>
+
+    <div class="kpi-card" id="kpi-logins">
+      <div class="kpi-label">SecOps Logins</div>
+      <div class="kpi-value" id="kpi-login-val" data-count-from="0" data-count-to="0">0</div>
+    </div>
+
+    <div class="kpi-card" id="kpi-requests">
+      <div class="kpi-label">Pending Clearances</div>
+      <div class="kpi-value" id="pending-requests-count" data-count-from="0" data-count-to="0">0</div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR TOGGLE -->
+  <button id="sidebarToggle" class="sidebar-toggle" aria-expanded="false">
+    ☰ Operations Menu
+  </button>
+
+  <!-- SIDEBAR CONTENT -->
+  <aside id="sidebar" class="sidebar" aria-hidden="true">
+    <h3>Defense Control Panel</h3>
+    <button class="menu-btn" onclick="window.location.href='http://127.0.0.1:5001/honeypot_db'">
+      Intelligence Records
+    </button>
+    <div style="height:30px"></div>
+    <div class="small" style="color: var(--muted); line-height: 1.4;">
+      System status · Syncing · Read-only access
+    </div>
+  </aside>
+
+  <!-- DASHBOARD CONTENT CARDS -->
+  <div class="container">
+    <div class="grid">
+      <!-- LEFT CONTAINER -->
+      <div class="left">
+        <!-- Live traffic chart -->
+        <div class="panel">
+          <h2>Traffic Ingress Telemetry: Local vs Global</h2>
+          <div class="small">Timeseries capture of local target versus global ingress signals</div>
+          <div class="chart-wrap"><canvas id="liveIpLine"></canvas></div>
+          <div class="controls">
+            <button class="btn" id="btnRefreshGeo">Force Sync Geo</button>
+          </div>
+        </div>
+
+        <!-- Live Detections Datatable -->
+        <div class="panel">
+          <h2>Live Security Detections <span style="float:right" id="det-count" class="metric" style="font-size: 1.25rem;">0</span></h2>
+          <div class="small">Real-time multi-agent classification evaluation logs</div>
+          <div style="margin-top:14px;">
+            <table id="live-detections" class="display" style="width:100%">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Traffic Flow</th>
+                  <th>Core Engine</th>
+                  <th>Pred</th>
+                  <th>Anomaly Score</th>
+                  <th>Timestamp</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Honeypot triggers table -->
+        <div class="panel">
+          <h2>Decoy Engagements <span style="float:right" id="hp-count" class="metric" style="font-size: 1.25rem;">0</span></h2>
+          <div class="small">Attacker traffic dynamically locked in column-deranged environment</div>
+          <div style="margin-top:14px;">
+            <table id="hp-triggers" class="display" style="width:100%">
+              <thead>
+                <tr>
+                  <th>Decoy Session ID</th>
+                  <th>Origin IP</th>
+                  <th>Signature UA</th>
+                  <th>Decoy Destination</th>
+                  <th>Redirection Time</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT CONTAINER -->
+      <div class="right">
+        <!-- Recent Logins Stream -->
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div class="metric" id="login-count">0</div>
+              <div class="metric-label">Operational Logins</div>
+            </div>
+            <div>
+              <button class="btn" onclick="location.href='/admin/blocklist'">Manage IPs</button>
+            </div>
+          </div>
+          <div class="small" style="margin-top:10px">Live SecOps interface authorization requests</div>
+          <div class="stream" id="login-stream"></div>
+        </div>
+
+        <!-- Network charts visuals -->
+        <div class="card">
+          <h2 style="margin-bottom:4px; color:var(--accent-2);">Intrusion Analytics</h2>
+          <div class="small">Volume per source host & attack category breakdown</div>
+          <div class="chart-wrap"><canvas id="topIpsCanvas"></canvas></div>
+          <div class="chart-wrap"><canvas id="attackPieCanvas"></canvas></div>
+          <div class="controls">
+            <button class="btn" id="btnRefreshCharts">Refresh Analytics</button>
+            <button class="btn" id="btnUnblockTop" style="background: linear-gradient(90deg, var(--danger), #ff5252); color: #fff;">Unblock Top Rule</button>
+          </div>
+        </div>
+
+        <!-- Decoy Asset Downloads (Honey-Tokens) -->
+        <div class="card" id="decoy-downloads-card" style="border-color: rgba(255, 115, 0, 0.3); background: rgba(255, 115, 0, 0.02); margin-bottom: 20px;">
+          <h2 style="margin-bottom:4px; color:var(--accent-2);">🛡️ System Credentials Key</h2>
+          <div class="small">Classified credentials database backup (RESTRICTED ACCESS)</div>
+          <div style="margin-top:14px; display:flex; flex-direction:column; gap:8px;">
+            <a href="/honeypot/download_token?sid={{ sid }}" class="btn" style="text-align:center; text-decoration:none; background: linear-gradient(90deg, #ff7300, #ffae42); color: #03060a; padding: 12px; font-weight:bold;">
+              Download config_passwords.txt
+            </a>
+            <div class="small" style="font-size: 0.72rem; text-align:center; color: var(--muted);">SHA256: 8a7f4e91bc... (Encrypted payload)</div>
+          </div>
+        </div>
+
+        <!-- Pending access clearances -->
+        <div class="card" id="registrations-card">
+          <h2 style="margin-bottom:4px; color:var(--accent-2);">SecOps Clearances</h2>
+          <div class="small">New account authorizations awaiting supervisor review</div>
+          <div style="margin-top:12px;">
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+              <div>
+                <div class="metric" id="reg-count">0</div>
+                <div class="small">Pending authorizations</div>
+              </div>
+              <button class="btn" id="btn-refresh-reg">Scan Queue</button>
+            </div>
+            <div style="margin-top:14px; border-top: 1px dashed rgba(255, 255, 255, 0.08); padding-top: 14px;">
+              <div class="small" style="margin-bottom:8px">Operations Activity Ticker</div>
+              <div id="alerts-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Javascript assets -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- DECOY LOGIC IMPLEMENTATION (HARD OVERRIDES & SIMULATIONS) -->
+  <script>
+    /* Leaflet Threat Map Mappings (Simulated Decoy) */
+    const map = L.map('world-map', {
+      zoomControl: true,
+      attributionControl: false,
+      worldCopyJump: false,
+      maxBounds: [[-85, -180], [85, 180]],
+      maxBoundsViscosity: 1.0
+    }).setView([22, 10], 2.2);
+
+    const worldBounds = [[-85, -180], [85, 180]];
+    map.setMaxBounds(worldBounds);
+    map.setMinZoom(2.0);
+    map.setMaxZoom(4.8);
+
+    map.on('drag', () => map.panInsideBounds(worldBounds, { animate: false }));
+    map.on('zoomend', () => map.panInsideBounds(worldBounds, { animate: false }));
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      subdomains: 'abcd',
+      maxZoom: 5,
+      noWrap: true, 
+      bounds: worldBounds
+    }).addTo(map);
+
+    function generateCitiesAround(lat, lng, count, spread = 1.2) {
+      const cities = [];
+      for (let i = 0; i < count; i++) {
+        cities.push([
+          lat + (Math.random() - 0.5) * spread,
+          lng + (Math.random() - 0.5) * spread
+        ]);
+      }
+      return cities;
+    }
+
+    function spawnRipple(lat, lng, color = '#ff3b3b') {
+      const ripple = L.circle([lat, lng], {
+        radius: 30000,
+        color: color,
+        weight: 2,
+        opacity: 0.9,
+        fillOpacity: 0
+      }).addTo(map);
+
+      let r = 30000;
+      const maxR = 900000;
+
+      const anim = setInterval(() => {
+        r += 25000;
+        ripple.setRadius(r);
+        ripple.setStyle({
+          opacity: Math.max(0.15, 1 - r / maxR)
+        });
+
+        if (r >= maxR) {
+          clearInterval(anim);
+          map.removeLayer(ripple);
+        }
+      }, 60);
+    }
+
+    const hubs = {
+      india: [
+        ...generateCitiesAround(12.97, 77.59, 15),
+        ...generateCitiesAround(28.61, 77.20, 5),
+        ...generateCitiesAround(19.07, 72.87, 10),
+        ...generateCitiesAround(13.08, 80.27, 6),
+      ],
+      usa: [
+        ...generateCitiesAround(40.71, -74.01, 10),
+        ...generateCitiesAround(34.05, -118.24, 15),
+      ],
+      china: [
+        ...generateCitiesAround(39.90, 116.40, 10),
+        ...generateCitiesAround(31.23, 121.47, 5),
+      ],
+      russia: [
+        ...generateCitiesAround(55.75, 37.61, 20),
+      ],
+      middleEast: [
+        ...generateCitiesAround(25.27, 55.30, 10),
+      ],
+      africa: [
+        ...generateCitiesAround(-26.20, 28.04, 10),
+      ],
+      southAmerica: [
+        ...generateCitiesAround(-23.55, -46.63, 10),
+      ],
+      australia: [
+        ...generateCitiesAround(-33.86, 151.20, 10),
+      ]
+    };
+
+    function countryToFlag(country) {
+      const map = {
+        "India": "🇮🇳",
+        "United States": "🇺🇸",
+        "China": "🇨🇳",
+        "Russia": "🇷🇺",
+        "Middle East": "🌍",
+        "Africa": "🌍",
+        "South America": "🌎",
+        "Australia": "🇦🇺",
+        "Global": "🌐"
+      };
+      return map[country] || "🌐";
+    }
+
+    function pickWeightedHub() {
+      const r = Math.random();
+      if (r < 0.40) return randomFrom(hubs.india);
+      if (r < 0.55) return randomFrom(hubs.usa);
+      if (r < 0.68) return randomFrom(hubs.china);
+      if (r < 0.78) return randomFrom(hubs.russia);
+      if (r < 0.86) return randomFrom(hubs.middleEast);
+      if (r < 0.93) return randomFrom(hubs.africa);
+      if (r < 0.97) return randomFrom(hubs.southAmerica);
+      return randomFrom(hubs.australia);
+    }
+
+    function randomFrom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function getSignalColor(lat, lng) {
+      if (hubs.india.some(p => p[0] === lat && p[1] === lng)) return '#ffcc66';
+      if (hubs.usa.some(p => p[0] === lat && p[1] === lng)) return '#ff4444';
+      if (hubs.china.some(p => p[0] === lat && p[1] === lng)) return '#ff2a2a';
+      if (hubs.russia.some(p => p[0] === lat && p[1] === lng)) return '#ff1e1e';
+      return '#ff8c1a';
+    }
+
+    function interpolatePoints(latlngs, steps = 40) {
+      const points = [];
+      for (let i = 0; i < latlngs.length - 1; i++) {
+        const a = latlngs[i];
+        const b = latlngs[i + 1];
+        for (let t = 0; t <= 1; t += 1 / steps) {
+          points.push([
+            a.lat + (b.lat - a.lat) * t,
+            a.lng + (b.lng - a.lng) * t
+          ]);
+        }
+      }
+      return points;
+    }
+
+    function computeArcMidPoint(origin, destination) {
+      return L.latLng(
+        (origin.lat + destination.lat) / 2 + 10,
+        (origin.lng + destination.lng) / 2
+      );
+    }
+
+    function animatePacketFlow(pathLatLngs, color) {
+      const points = interpolatePoints(pathLatLngs, 30);
+      let idx = 0;
+
+      const packet = L.circleMarker(points[0], {
+        radius: 3,
+        color,
+        fillColor: color,
+        fillOpacity: 1,
+        weight: 0
+      }).addTo(map);
+
+      const anim = setInterval(() => {
+        if (idx >= points.length) {
+          clearInterval(anim);
+          map.removeLayer(packet);
+          return;
+        }
+        packet.setLatLng(points[idx]);
+        idx++;
+      }, 45);
+    }
+
+    fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json')
+      .then(res => res.json())
+      .then(data => {
+        L.geoJSON(data, {
+          style: {
+            color: 'rgba(255, 115, 0, 0.25)',
+            weight: 1.1,
+            fillColor: '#070a10',
+            fillOpacity: 0.5
+          }
+        }).addTo(map);
+      });
+
+    let activeSignals = 0;
+    const MAX_SIGNALS = 45;
+
+    setInterval(() => {
+      if (activeSignals >= MAX_SIGNALS) return;
+      activeSignals++;
+
+      const p = pickWeightedHub();
+      const color = getSignalColor(p[0], p[1]);
+      const region = detectRegion(p[0], p[1]);
+      const country = hubToCountry[region] || "Global";
+      countryStats[country] = (countryStats[country] || 0) + 1;
+
+      const dot = L.circleMarker(p, {
+        radius: 6,
+        color: color,
+        fillColor: color,
+        fillOpacity: 1
+      }).addTo(map);
+
+      if (Math.random() < 0.25) spawnRipple(p[0], p[1], color);
+
+      const origin = L.latLng(p[0], p[1]);
+      const destination = L.latLng(12.97, 77.59);
+      const midPoint = computeArcMidPoint(origin, destination);
+
+      const arc = L.polyline([origin, midPoint, destination], {
+        color,
+        weight: 1.4,
+        opacity: 0.5,
+        dashArray: '6,6'
+      }).addTo(map);
+
+      animatePacketFlow(arc.getLatLngs(), color);
+
+      setTimeout(() => map.removeLayer(arc), 5000);
+      setTimeout(() => {
+        map.removeLayer(dot);
+        activeSignals--;
+      }, 6000);
+    }, 1100);
+
+    /* 🔐 DECOY INTERCEPTORS AND FAKE AJAX CALLS */
+    const IS_DECOY = true;
+    $.getJSON = function(){ return { done(cb){ cb([]); return this; }, fail(){ return this; } }; };
+    window.fetch = () => new Promise(()=>{});
+    window.EventSource = function(){ return { close(){}, addEventListener(){} }; };
+
+    function animateCount(el, duration = 600) {
+      if (typeof el === 'string') el = document.getElementById(el);
+      if (!el || !el.classList || !el.classList.contains('kpi-value')) return;
+
+      const start = parseInt(el.dataset.countFrom || 0);
+      const end   = parseInt(el.dataset.countTo || 0);
+      if (start === end) return;
+
+      const range = end - start;
+      const t0 = performance.now();
+
+      function step(t){
+        const p = Math.min((t - t0) / duration, 1);
+        el.textContent = Math.floor(start + range * p);
+        if (p < 1) requestAnimationFrame(step);
+        else el.dataset.countFrom = end;
+      }
+      requestAnimationFrame(step);
+    }
+
+    function r(min,max){ return Math.floor(min + Math.random()*(max-min)); }
+
+    const detTable = $('#live-detections').DataTable({ paging:false, info:false });
+    const hpTable  = $('#hp-triggers').DataTable({ paging:false, info:false });
+
+    function seedTables(){
+      detTable.clear();
+      for(let i=0;i<14;i++){
+        detTable.row.add([
+          9000+i,
+          'flow-auth-'+r(100,999),
+          'Hybrid decision',
+          r(0,2) === 1 ? 'BLOCK' : 'WATCH',
+          Math.random().toFixed(3),
+          new Date().toISOString()
+        ]);
+      }
+      detTable.draw();
+      $('#det-count').text(detTable.rows().count());
+
+      hpTable.clear();
+      for(let i=0;i<6;i++){
+        hpTable.row.add([
+          'sid-'+r(1000,9999),
+          `192.168.${r(1,255)}.${r(1,255)}`,
+          'Mozilla/5.0 Decoy Agent',
+          '/honeypot_db',
+          new Date().toISOString()
+        ]);
+      }
+      hpTable.draw();
+      $('#hp-count').text(hpTable.rows().count());
+    }
+
+    function seedKPIs(){
+      [
+        ['kpi-det-val', r(180,260)],
+        ['kpi-hp-val', r(20,45)],
+        ['kpi-login-val', r(70,140)],
+        ['pending-requests-count', r(3,9)]
+      ].forEach(([id,val])=>{
+        const el = document.getElementById(id);
+        if(!el) return;
+        el.dataset.countTo = val;
+        animateCount(el);
+      });
+    }
+
+    function seedLoginStream(){
+      const ls = $('#login-stream').empty();
+      for(let i=0;i<20;i++){
+        ls.append(`<div class="item">
+          <span class="time">${new Date().toISOString()}</span>
+          <strong>10.0.${i}.${r(1,255)}</strong> → /admin_dashboard
+        </div>`);
+      }
+      $('#login-count').text(20);
+    }
+
+    let topIpsChart, attackPieChart, ipLineChart;
+
+    function renderTopIps(data){
+      const ctx = document.getElementById('topIpsCanvas').getContext('2d');
+      if (topIpsChart) topIpsChart.destroy();
+      topIpsChart = new Chart(ctx,{
+        type:'bar',
+        data:{
+          labels:data.map(d=>d.ip),
+          datasets:[{
+            data:data.map(d=>d.count),
+            backgroundColor:'rgba(255,115,0,0.35)',
+            borderColor:'rgba(255,115,0,0.85)',
+            borderWidth:1
+          }]
+        },
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          plugins:{legend:{display:false}},
+          scales:{
+            x:{ticks:{color:'#a8b2c1'}, grid:{color:'rgba(255,255,255,0.02)'}},
+            y:{ticks:{color:'#a8b2c1'}, grid:{color:'rgba(255,255,255,0.02)'}, beginAtZero:true}
+          }
+        }
+      });
+    }
+
+    function renderAttackPie(data){
+      const ctx = document.getElementById('attackPieCanvas').getContext('2d');
+      if (attackPieChart) attackPieChart.destroy();
+      attackPieChart = new Chart(ctx,{
+        type:'doughnut',
+        data:{
+          labels:data.map(d=>d.type),
+          datasets:[{
+            data:data.map(d=>d.count),
+            backgroundColor:[
+              'rgba(255, 115, 0, 0.75)',
+              'rgba(255, 174, 66, 0.75)',
+              'rgba(255, 23, 68, 0.75)',
+              'rgba(139, 155, 176, 0.65)'
+            ],
+            borderWidth: 0
+          }]
+        },
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          plugins:{legend:{position:'bottom',labels:{color:'#e2e8f0', boxWidth:12}}}
+        }
+      });
+    }
+
+    function renderIpLine(){
+      const ctx = document.getElementById('liveIpLine').getContext('2d');
+      if (ipLineChart) ipLineChart.destroy();
+      ipLineChart = new Chart(ctx,{
+        type:'line',
+        data:{
+          labels:[...Array(8).keys()],
+          datasets:[
+            {label:'India SOC',data:Array.from({length:8},()=>r(20,60)),borderColor:'rgba(0, 230, 118, 0.85)', backgroundColor:'rgba(0, 230, 118, 0.05)', fill:true, tension:0.25},
+            {label:'Global Ingress',data:Array.from({length:8},()=>r(10,40)),borderColor:'rgba(255,115,0,0.85)', backgroundColor:'rgba(255,115,0,0.05)', fill:true, tension:0.25}
+          ]
+        },
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          plugins:{legend:{labels:{color:'#eaeaea'}}},
+          scales:{
+            x:{ticks:{color:'#a8b2c1'}, grid:{color:'rgba(255,255,255,0.02)'}},
+            y:{ticks:{color:'#a8b2c1'}, grid:{color:'rgba(255,255,255,0.02)'}}
+          }
+        }
+      });
+    }
+
+    function seedCharts(){
+      renderTopIps([
+        {ip:'203.0.113.5',count:r(20,60)},
+        {ip:'198.51.100.9',count:r(15,45)},
+        {ip:'192.0.2.77',count:r(10,35)}
+      ]);
+      renderAttackPie([
+        {type:'SQLi',count:r(15,35)},
+        {type:'XSS',count:r(10,30)},
+        {type:'Bruteforce',count:r(20,50)},
+        {type:'Recon',count:r(10,25)}
+      ]);
+      renderIpLine();
+    }
+
+    /* Sidebar controls */
+    const toggleBtn = document.getElementById("sidebarToggle");
+    const sidebar   = document.getElementById("sidebar");
+
+    toggleBtn?.addEventListener("click", () => {
+      const isOpen = sidebar.classList.toggle("open");
+      toggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      sidebar.setAttribute("aria-hidden", isOpen ? "false" : "true");
+      document.body.classList.toggle('menu-open', isOpen);
+    });
+
+    document.getElementById('sidebar-overlay')?.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      document.body.classList.remove('menu-open');
+    });
+
+    const countryStats = {};
+    const hubToCountry = {
+      india: "India",
+      usa: "United States",
+      china: "China",
+      russia: "Russia",
+      middleEast: "Middle East",
+      africa: "Africa",
+      southAmerica: "South America",
+      australia: "Australia"
+    };
+
+    function detectRegion(lat, lng) {
+      for (const region in hubs) {
+        for (const point of hubs[region]) {
+          if (point[0] === lat && point[1] === lng) {
+            return region;
+          }
+        }
+      }
+      return "global";
+    }
+
+    function renderCountryRanking() {
+      const body = document.getElementById("country-rank-body");
+      if (!body) return;
+      body.innerHTML = "";
+
+      Object.entries(countryStats)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6)
+        .forEach(([country, count], idx) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td style="text-align:center;font-weight:700; color:var(--muted); font-size:0.75rem;">${idx + 1}</td>
+            <td style="text-align:left; font-size:0.82rem;">${country}</td>
+            <td style="text-align:center;font-size:16px;">${countryToFlag(country)}</td>
+            <td style="text-align:right;font-weight:800;color:#ffae42; font-family:'JetBrains Mono',monospace;">${count}</td>
+          `;
+          body.appendChild(row);
+        });
+    }
+
+    setInterval(renderCountryRanking, 2000);
+
+    document.addEventListener('DOMContentLoaded',()=>{
+      seedTables();
+      seedKPIs();
+      seedLoginStream();
+      seedCharts();
+      setInterval(seedKPIs, 4000);
+      console.warn('🟠 DECOY FAKE DASHBOARD ACTIVE');
+    });
+  </script>
+</body>
+</html>

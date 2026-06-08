@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block title %}ABHEDYA — Intelligence Assets{% endblock %}
+
+{% block header_actions %}
+  <a href="/admin_dashboard" class="btn-secondary">
+    ← Dashboard
+  </a>
+{% endblock %}
+
+{% block content %}
+<style>
+  .intel-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 115, 0, 0.1);
+  }
+
+  .intel-title-group h1 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.5px;
+  }
+
+  .intel-title-group .subtitle {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Search bar design */
+  .intel-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(8, 12, 20, 0.6);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 4px 6px;
+    transition: all 0.3s ease;
+  }
+
+  .intel-search:focus-within {
+    border-color: var(--accent-2);
+    box-shadow: 0 0 12px rgba(255, 174, 66, 0.15);
+  }
+
+  .intel-search input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    padding: 8px 12px;
+    width: 280px;
+    font-family: inherit;
+    font-size: 0.9rem;
+  }
+
+  .intel-search input::placeholder {
+    color: #5d6d85;
+  }
+
+  .intel-search button {
+    border: none;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    color: #03060a;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s ease;
+  }
+
+  .intel-search button:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 0 10px rgba(255, 115, 0, 0.4);
+  }
+
+  /* Table highlights */
+  tr.sus-high {
+    background: rgba(255, 23, 68, 0.05) !important;
+  }
+  tr.sus-high:hover td {
+    background: rgba(255, 23, 68, 0.09) !important;
+  }
+
+  /* Badges */
+  .threat-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-align: center;
+  }
+
+  .threat-high {
+    background: rgba(255, 23, 68, 0.15);
+    color: #ff1744;
+    border: 1px solid rgba(255, 23, 68, 0.3);
+  }
+
+  .threat-mid {
+    background: rgba(255, 179, 0, 0.15);
+    color: #ffb300;
+    border: 1px solid rgba(255, 179, 0, 0.3);
+  }
+
+  .threat-low {
+    background: rgba(0, 230, 118, 0.1);
+    color: #00e676;
+    border: 1px solid rgba(0, 230, 118, 0.2);
+  }
+
+  .btn-view {
+    background: rgba(255, 115, 0, 0.1);
+    border: 1px solid rgba(255, 115, 0, 0.25);
+    color: var(--accent-2);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+  }
+
+  .btn-view:hover {
+    background: var(--accent);
+    color: #03060a;
+    border-color: var(--accent);
+    box-shadow: 0 0 10px rgba(255, 115, 0, 0.3);
+  }
+  
+  .details-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .details-row {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    padding-bottom: 8px;
+  }
+  
+  .details-row span:first-child {
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+  
+  .details-row span:last-child {
+    font-weight: 700;
+    color: #ffffff;
+    font-family: "JetBrains Mono", monospace;
+  }
+</style>
+
+<div class="intel-controls">
+  <div class="intel-title-group">
+    <h1>Intelligence Database</h1>
+    <div class="subtitle">
+      Querying parameters: <strong>{{ q|default('ALL ASSETS') }}</strong>
+    </div>
+  </div>
+
+  <form method="GET" action="" class="intel-search">
+    <input
+      type="text"
+      name="q"
+      value="{{ q|default('') }}"
+      placeholder="Search asset, codename, status..."
+      autocomplete="off"
+    />
+    <button type="submit">Query</button>
+  </form>
+</div>
+
+<table id="intel-table" class="display" style="width:100%">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Asset ID</th>
+      <th>Codename</th>
+      <th>Affiliation</th>
+      <th>Threat</th>
+      <th>Status</th>
+      <th>Last Location</th>
+      <th>Priority</th>
+      <th>Extraction</th>
+      <th>Reliability</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    {% set is_sus = r['threat_level'] and r['threat_level']|int >= 8 %}
+    <tr class="{{ 'sus-high' if is_sus }}">
+      <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.82rem;">{{ r['id'] }}</td>
+      <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent-2);">{{ r['asset_id'] }}</td>
+      <td style="font-weight: 700;">{{ r['codename'] }}</td>
+      <td>{{ r['affiliation'] }}</td>
+      <td>
+        {% if r['threat_level']|int >= 8 %}
+          <span class="threat-badge threat-high">HIGH ({{ r['threat_level'] }})</span>
+        {% elif r['threat_level']|int >= 4 %}
+          <span class="threat-badge threat-mid">MID ({{ r['threat_level'] }})</span>
+        {% else %}
+          <span class="threat-badge threat-low">LOW ({{ r['threat_level'] }})</span>
+        {% endif %}
+      </td>
+      <td>
+        <span style="display:inline-flex; align-items:center; gap:6px;">
+          <span style="width:6px; height:6px; border-radius:50%; background:{{ '#00e676' if r['status'] == 'active' else '#8b9bb0' }}"></span>
+          {{ r['status'] }}
+        </span>
+      </td>
+      <td>{{ r['last_known_location'] }}</td>
+      <td>
+        <span style="color: {{ '#ff1744' if r['mission_priority'] == 'High' else '#ffb300' if r['mission_priority'] == 'Medium' else '#8b9bb0' }}; font-weight: 700;">
+          {{ r['mission_priority'] }}
+        </span>
+      </td>
+      <td>
+        <span style="font-weight: 700; color: {{ '#00e676' if r['extraction_needed'] == 1 else '#5d6d85' }}">
+          {{ 'YES' if r['extraction_needed'] == 1 else 'NO' }}
+        </span>
+      </td>
+      <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700;">{{ r['reliability_score'] }}</td>
+      <td>
+        <button class="btn-view" data-id="{{ r['id'] }}">View Profile</button>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+  // Attach handlers to view buttons
+  document.querySelectorAll(".btn-view").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var id = this.dataset.id;
+      btn.innerText = "Querying...";
+      
+      fetch("/admin/intel/" + id + ".json")
+        .then(resp => {
+          if(!resp.ok) throw new Error("Connection error");
+          return resp.json();
+        })
+        .then(data => {
+          btn.innerText = "View Profile";
+          var html = '<div class="details-list">';
+          html += '<div class="details-row"><span>Record ID</span><span>' + (data.id || '') + '</span></div>';
+          html += '<div class="details-row"><span>Asset Ref</span><span>' + (data.asset_id || '') + '</span></div>';
+          html += '<div class="details-row"><span>Codename</span><span>' + (data.codename || '') + '</span></div>';
+          html += '<div class="details-row"><span>Affiliation</span><span>' + (data.affiliation || '') + '</span></div>';
+          html += '<div class="details-row"><span>Threat Rating</span><span>' + (data.threat_level || '0') + '/10</span></div>';
+          html += '<div class="details-row"><span>Operational Status</span><span>' + (data.status || '') + '</span></div>';
+          html += '<div class="details-row"><span>Last Coordinates</span><span>' + (data.last_known_location || '') + '</span></div>';
+          html += '<div class="details-row"><span>Priority Status</span><span>' + (data.mission_priority || '') + '</span></div>';
+          html += '<div class="details-row"><span>Extraction Trigger</span><span>' + ((data.extraction_needed==1)?'TRUE':'FALSE') + '</span></div>';
+          html += '<div class="details-row"><span>Reliability Score</span><span>' + (data.reliability_score || '0.00') + '</span></div>';
+          html += '<div class="details-row"><span>Contact Timestamp</span><span>' + (data.last_contact_ts || '-') + '</span></div>';
+          html += '</div>';
+          html += '<div style="margin-top:20px; border-top:1px solid rgba(255,115,0,0.15); padding-top:14px;">';
+          html += '<span style="color:var(--muted); font-size:0.8rem; font-weight:700; text-transform:uppercase; display:block; margin-bottom:8px;">Raw Asset Schema</span>';
+          html += '<pre style="font-family:\'JetBrains Mono\',monospace; font-size:0.75rem; background:rgba(0,0,0,0.4); color:#a0b0c0; padding:10px; border-radius:8px; overflow:auto; max-height:200px; border:1px solid rgba(255,255,255,0.03);">' + JSON.stringify(data, null, 2) + '</pre>';
+          html += '</div>';
+          
+          if(window.openIntelDrawer){
+            window.openIntelDrawer('Asset Profile — ' + (data.codename || 'Details'), html);
+          } else {
+            alert(JSON.stringify(data, null, 2));
+          }
+        })
+        .catch(err => {
+          btn.innerText = "View Profile";
+          if(window.openIntelDrawer) {
+            window.openIntelDrawer('Query Failed', '<div style="color:var(--danger); font-weight:700;">Error fetching metadata profile: '+ err +'</div>');
+          } else {
+            alert('Error: ' + err);
+          }
+        });
+    });
+  });
+
+  // Table scrolling scrollbar adjustments
+  const tableScroll = document.querySelector('.table-scroll');
+  if(tableScroll){
+    tableScroll.style.willChange = 'transform';
+    setTimeout(()=> tableScroll.style.willChange = '', 400);
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Live Capture</title>
+  <style>
+    body{font-family: Arial, sans-serif; padding:20px; background:#0b1020; color:#e6eef8}
+    .controls{margin-bottom:12px}
+    input, button{padding:8px; margin-right:6px}
+    table{width:100%; border-collapse:collapse; margin-top:12px}
+    th,td{padding:8px; border-bottom:1px solid #1f2736; text-align:left; font-size:13px}
+    .small{font-size:12px; color:#9fb0c6}
+    .btn{padding:8px 12px; cursor:pointer; border:0; border-radius:4px}
+    .btn-start{background:#16a34a; color:white}
+    .btn-stop{background:#dc2626; color:white}
+  </style>
+</head>
+<body>
+  <h2>Packet Capture (Admin)</h2>
+
+  <div class="controls">
+    Interface: <input id="iface" placeholder="e.g., Wi-Fi" value="Wi-Fi" />
+    BPF filter (optional): <input id="bpf" placeholder="tcp port 80" />
+    <button id="startBtn" class="btn btn-start">Start Capture</button>
+    <button id="stopBtn" class="btn btn-stop" disabled>Stop Capture</button>
+    <span id="status" class="small"></span>
+  </div>
+
+  <div>
+    <table id="tbl">
+      <thead><tr><th>Time</th><th>Src</th><th>Dst</th><th>Proto</th><th>Info</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+<script>
+let currentId = null;
+let es = null;
+const startBtn = document.getElementById('startBtn');
+const stopBtn = document.getElementById('stopBtn');
+const statusEl = document.getElementById('status');
+const tbody = document.getElementById('tbody');
+
+startBtn.onclick = async () => {
+  const iface = document.getElementById('iface').value.trim();
+  const bpf = document.getElementById('bpf').value.trim();
+  if(!iface){ alert("Enter interface (e.g., Wi-Fi)"); return; }
+  startBtn.disabled = true;
+  statusEl.textContent = 'Starting...';
+
+  const form = new FormData();
+  form.append('iface', iface);
+  form.append('bpf', bpf);
+  const res = await fetch('/capture/start', { method:'POST', body: form });
+  if(!res.ok){ alert('Start failed'); startBtn.disabled = false; statusEl.textContent='Start failed'; return; }
+  const js = await res.json();
+  currentId = js.capture_id;
+  statusEl.textContent = 'Running (' + currentId + ')';
+  stopBtn.disabled = false;
+
+  // start SSE
+  es = new EventSource('/capture/stream/' + currentId);
+  es.onmessage = (e) => {
+    const pkt = JSON.parse(e.data);
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${pkt.time}</td><td>${pkt.src}</td><td>${pkt.dst}</td><td>${pkt.proto}</td><td>${pkt.info}</td>`;
+    tbody.insertBefore(row, tbody.firstChild);
+    // keep table bounded (e.g., 500 rows)
+    while(tbody.children.length > 500) tbody.removeChild(tbody.lastChild);
+  };
+  es.addEventListener('end', () => {
+    statusEl.textContent = 'Capture finished';
+    stopBtn.disabled = true;
+    startBtn.disabled = false;
+    if(es) es.close();
+  });
+  es.onerror = (err) => {
+    statusEl.textContent = 'SSE error (check console)';
+    console.error('SSE error', err);
+  };
+};
+
+stopBtn.onclick = async () => {
+  if(!currentId){ alert('No capture running'); return; }
+  stopBtn.disabled = true;
+  const form = new FormData();
+  form.append('capture_id', currentId);
+  const res = await fetch('/capture/stop', { method:'POST', body: form });
+  if(res.ok){
+    statusEl.textContent = 'Stopping...';
+    // After stop, backend will close SSE which triggers 'end' event
+  } else {
+    statusEl.textContent = 'Stop failed';
+    stopBtn.disabled = false;
+  }
+};
+</script>
+</body>
+</html>

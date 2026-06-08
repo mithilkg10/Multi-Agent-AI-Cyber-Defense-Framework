@@ -1,0 +1,11 @@
+import sqlite3
+conn = sqlite3.connect("intelligence_assets.db")
+cur = conn.cursor()
+cur.execute("CREATE INDEX IF NOT EXISTS idx_asset_id ON intelligence_assets(asset_id)")
+cur.execute("CREATE INDEX IF NOT EXISTS idx_codename ON intelligence_assets(codename)")
+cur.execute("CREATE INDEX IF NOT EXISTS idx_affiliation ON intelligence_assets(affiliation)")
+cur.execute("CREATE INDEX IF NOT EXISTS idx_threat ON intelligence_assets(threat_level)")
+cur.execute("CREATE INDEX IF NOT EXISTS idx_last_contact ON intelligence_assets(last_contact_ts)")
+conn.commit()
+conn.close()
+print("Indexes created.")

@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block title %}ABHEDYA — Access Control Requests{% endblock %}
+
+{% block header_actions %}
+  <a href="{{ url_for('admin_dashboard') }}" class="btn-secondary">
+    ← Dashboard
+  </a>
+{% endblock %}
+
+{% block content %}
+<style>
+  .requests-container {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .requests-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 115, 0, 0.1);
+  }
+
+  .requests-header h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.5px;
+  }
+
+  .requests-header .subtext {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Search input */
+  .search-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(8, 12, 20, 0.6);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 4px 6px;
+  }
+
+  .search-container input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    padding: 8px 12px;
+    width: 260px;
+    font-family: inherit;
+    font-size: 0.9rem;
+  }
+
+  .search-container input::placeholder {
+    color: #5d6d85;
+  }
+
+  .search-container button {
+    border: 1px solid rgba(255, 115, 0, 0.25);
+    background: rgba(255, 115, 0, 0.05);
+    color: var(--accent-2);
+    font-weight: 700;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s ease;
+  }
+
+  .search-container button:hover {
+    background: rgba(255, 115, 0, 0.12);
+    border-color: var(--accent-2);
+  }
+
+  /* Status and Action Elements */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(255, 179, 0, 0.3);
+    background: rgba(255, 179, 0, 0.1);
+    color: #ffb300;
+  }
+
+  .dept-badge {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: #ffffff;
+    font-family: "JetBrains Mono", monospace;
+  }
+
+  .actions-cell {
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn-approve {
+    background: linear-gradient(90deg, #00e676, #00b0ff);
+    color: #03060a;
+    border: none;
+    font-weight: 800;
+    padding: 7px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.78rem;
+    box-shadow: 0 4px 12px rgba(0, 230, 118, 0.2);
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-approve:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 230, 118, 0.45);
+    filter: brightness(1.1);
+  }
+
+  .btn-reject {
+    background: linear-gradient(90deg, #ff1744, #ff5252);
+    color: #ffffff;
+    border: none;
+    font-weight: 800;
+    padding: 7px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.78rem;
+    box-shadow: 0 4px 12px rgba(255, 23, 68, 0.2);
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-reject:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(255, 23, 68, 0.4);
+    filter: brightness(1.1);
+  }
+
+  .no-data-msg {
+    text-align: center;
+    color: var(--muted);
+    padding: 40px 0;
+    font-weight: 500;
+  }
+</style>
+
+<div class="requests-container">
+  <div class="requests-header">
+    <div>
+      <h2>Access Approvals</h2>
+      <div class="subtext">
+        Pending user account registration requests. Verify departments before issuing credentials.
+      </div>
+    </div>
+
+    <div class="search-container">
+      <input id="req-search" placeholder="Search by name..." autocomplete="off" />
+      <button id="clear-search">Clear</button>
+    </div>
+  </div>
+
+  <table class="display" style="width:100%">
+    <thead>
+      <tr>
+        <th style="width: 80px;">Req ID</th>
+        <th>Full Name</th>
+        <th>Department</th>
+        <th>Remarks / Justification</th>
+        <th style="width: 140px;">Status</th>
+        <th style="width: 190px;">Action Controls</th>
+      </tr>
+    </thead>
+    <tbody id="requests-body">
+      {% if requests %}
+        {% for req in requests %}
+        <tr data-name="{{ req[1] }}">
+          <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">#{{ req[0] }}</td>
+          <td style="font-weight: 700; color: #ffffff;">{{ req[1] }}</td>
+          <td>
+            <span class="dept-badge">{{ req[2]|upper }}</span>
+          </td>
+          <td style="color: #cbd5e1; font-style: {{ 'normal' if req[3] else 'italic' }}">
+            {{ req[3] or 'No remarks provided' }}
+          </td>
+          <td>
+            <span class="status-badge">
+              <span style="width: 6px; height: 6px; border-radius: 50%; background: #ffb300; display: inline-block;"></span>
+              {{ req[4] }}
+            </span>
+          </td>
+          <td>
+            <div class="actions-cell">
+              <a href="{{ url_for('approve_request', req_id=req[0]) }}" class="btn-approve">
+                Approve
+              </a>
+              <a href="{{ url_for('reject_request', req_id=req[0]) }}" class="btn-reject">
+                Reject
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      {% else %}
+        <tr>
+          <td colspan="6">
+            <div class="no-data-msg">No pending registrations found. All caught up.</div>
+          </td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+  const searchInput = document.getElementById('req-search');
+  const tbody = document.getElementById('requests-body');
+  const clearBtn = document.getElementById('clear-search');
+
+  if (tbody) {
+    searchInput.addEventListener('input', function(){
+      const query = this.value.trim().toLowerCase();
+      const rows = tbody.querySelectorAll('tr[data-name]');
+      let matchesCount = 0;
+      
+      rows.forEach(row => {
+        const name = row.dataset.name.toLowerCase();
+        if (!query || name.includes(query)) {
+          row.style.display = '';
+          matchesCount++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      const noDataRow = tbody.querySelector('.no-matching-row');
+      if (matchesCount === 0 && rows.length > 0) {
+        if (!noDataRow) {
+          const tr = document.createElement('tr');
+          tr.className = 'no-matching-row';
+          tr.innerHTML = '<td colspan="6"><div class="no-data-msg">No matching pending requests.</div></td>';
+          tbody.appendChild(tr);
+        }
+      } else if (noDataRow) {
+        noDataRow.remove();
+      }
+    });
+
+    clearBtn.addEventListener('click', function(){
+      searchInput.value = '';
+      searchInput.dispatchEvent(new Event('input'));
+    });
+  }
+});
+</script>
+{% endblock %}

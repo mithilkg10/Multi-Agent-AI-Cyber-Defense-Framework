@@ -1,0 +1,10 @@
+with open("templates/dashboard.html", "r", encoding="utf-8") as f:
+    content = f.read()
+
+import re
+matches = [m.start() for m in re.finditer(r"liveIpChart", content)]
+for m in matches:
+    start = max(0, m - 100)
+    end = min(len(content), m + 200)
+    print("--- MATCH ---")
+    print(content[start:end])
