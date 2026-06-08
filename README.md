@@ -39,5 +39,3 @@ The system has been heavily audited and stress-tested using simulated threat mat
 
 In all scenarios, the RL loop accurately detects the anomaly, logs the MITRE ATT&CK vector, issues an automated IP blocklist entry, and securely logs the transaction using HMAC-SHA256.
 
- Contributors
-* **Lead Developer / Architect**: Mithil K Gowda
