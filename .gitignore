@@ -34,4 +34,30 @@ Thumbs.db
 *.db
 *.db-wal
 *.db-shm
-*.db
+*.db-journal
+*.sqbpro
+*.backup_*
+
+# Packet captures and runtime telemetry
+captures/
+*.pcap
+*.pcapng
+honeypot_logs/
+logs/
+*.log
+
+# Generated diagnostics / exports
+db_exports/
+db_dump_summary.json
+directory_structure.txt
+project_diagnostics.txt
+test_predict_output.json
+
+# Development scratch / backups
+*.bak
+*.old
+*.tmp
+scratch/
+
+# Generated data unless intentionally versioned
+*.csv
