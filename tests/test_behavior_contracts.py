@@ -33,6 +33,25 @@ class HybridDecisionContractTests(unittest.TestCase):
         self.assertIn('producer.send("honeypot_triggers"', source)
 
 
+class AppSecurityContractTests(unittest.TestCase):
+    def test_main_session_secret_supports_runtime_configuration(self):
+        source = read_source("app.py")
+        self.assertIn("ABHEDYA_FLASK_SECRET", source)
+        self.assertNotIn('app.secret_key = "supersecretkey"', source)
+
+    def test_default_admin_password_is_hashed_before_storage(self):
+        source = read_source("app.py")
+        self.assertIn("ABHEDYA_DEFAULT_ADMIN_PASSWORD", source)
+        self.assertIn("generate_password_hash(default_password)", source)
+
+    def test_legacy_plaintext_rows_are_migrated_on_successful_login(self):
+        source = read_source("app.py")
+        self.assertIn("_password_matches_and_upgrade", source)
+        self.assertIn("generate_password_hash(candidate)", source)
+        self.assertNotIn('admin["password"] == password', source)
+        self.assertNotIn('user["password"] == password', source)
+
+
 class KafkaPipelineContractTests(unittest.TestCase):
     def test_default_topics_remain_stable(self):
         source = read_source("kafka_models_consumer.py")
