@@ -165,6 +165,8 @@ The repository also contains model/runtime integrations whose exact compatibilit
 For example, in PowerShell:
 
 ```powershell
+$env:ABHEDYA_FLASK_SECRET = "replace-with-a-long-random-value"
+$env:ABHEDYA_DEFAULT_ADMIN_PASSWORD = "replace-with-a-strong-unique-password"
 $env:HONEYPOT_SECRET = "replace-with-a-long-random-value"
 $env:HONEYPOT_HOST = "http://127.0.0.1:5001"
 $env:KAFKA_BOOTSTRAP = "localhost:9092"
@@ -172,6 +174,14 @@ $env:ABHEDYA_LOG_HMAC_KEY = "replace-with-a-long-random-value"
 ```
 
 Never commit real credentials or secret keys.
+
+For compatibility with existing local/demo databases, the application retains explicit development fallbacks when the main session/admin/HMAC environment values are omitted. Configure the environment values above before any untrusted deployment.
+
+### Authentication compatibility
+
+Newly provisioned administrator credentials are stored using Werkzeug password hashing. Existing local databases that still contain legacy plaintext admin/user rows remain usable: after a successful legacy login, the stored credential is transparently upgraded to a password hash.
+
+This migration keeps existing login behavior intact while removing plaintext comparison from the normal authentication path.
 
 ### Start
 
@@ -189,15 +199,16 @@ The lightweight GitHub Actions pipeline is intentionally dependency-light and pr
 
 - tracked runtime/generated artifacts are not reintroduced;
 - core Python source files compile successfully;
-- behavior-sensitive contracts such as ensemble weights, fallback threshold, Kafka topics and response action names remain unchanged.
+- behavior-sensitive contracts such as ensemble weights, fallback threshold, Kafka topics and response action names remain unchanged;
+- main-session configuration and compatibility-preserving password hardening remain present.
 
 These checks do not replace full integration testing with Kafka, TShark, model artifacts and SQLite, but they provide a safe baseline for repository maintenance.
 
 ## Security status
 
-ABHEDYA is a research prototype. Repository hardening is separating development defaults, runtime data, debug artifacts and security-sensitive configuration from source-controlled application code.
+ABHEDYA is a research prototype. Repository hardening separates development defaults, runtime data, debug artifacts and security-sensitive configuration from source-controlled application code. The main Flask session secret and first-run administrator password can be supplied through the environment; new administrator credentials are hashed, and legacy plaintext rows are upgraded on successful authentication.
 
-See [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) and [`SECURITY.md`](SECURITY.md) for the current security boundaries and known debt.
+See [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) and [`SECURITY.md`](SECURITY.md) for the current security boundaries and remaining debt.
 
 ## Repository hygiene
 
@@ -210,8 +221,9 @@ Runtime databases, packet captures, logs, local environment files, caches and ge
 - SQLite remains the primary persistence layer and is suitable for this prototype workload rather than horizontally scaled deployment.
 - The DQN online retraining path does not currently provide an independent hold-out validation benchmark.
 - Rule-based decision explanations are exposed as `xai_explanation`; SHAP/LIME attribution is not currently implemented.
-- The main Flask application still contains legacy development authentication/session handling that requires a backward-compatible migration before untrusted deployment.
-- Production-grade identity, secret management, deployment isolation and observability require additional hardening before internet-facing deployment.
+- Development compatibility fallbacks remain available for session/admin/HMAC secrets when environment configuration is omitted; hardened deployments should explicitly configure those values.
+- `app.py` remains a large historical Flask module and should only be decomposed incrementally behind regression tests.
+- Production-grade CSRF protection, systematic route-authorization testing, authenticated/encrypted Kafka transport, deployment isolation and observability require additional hardening before internet-facing deployment.
 
 ## Responsible use
 
