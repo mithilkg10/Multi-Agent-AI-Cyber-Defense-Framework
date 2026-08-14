@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main, repo-hardening]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  repository-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Check tracked repository hygiene
+        run: python scripts/check_repo_hygiene.py
+
+      - name: Compile runtime Python sources
+        run: >-
+          python -m compileall -q
+          app.py
+          backend
+          anomaly_detector.py
+          producer.py
+          kafka_models_consumer.py
+          model_worker.py
+          honeypot_app.py
+          honeypot_controller.py
+          pyshark_to_predict.py
+          start_abhedya.py
