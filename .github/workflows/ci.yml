@@ -38,3 +38,6 @@ jobs:
           honeypot_controller.py
           pyshark_to_predict.py
           start_abhedya.py
+
+      - name: Run behavior contract tests
+        run: python -m unittest discover -s tests -v
