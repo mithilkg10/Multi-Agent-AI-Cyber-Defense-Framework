@@ -80,6 +80,16 @@ Kafka event flow             Direct prediction path
 
 See [`ARCHITECTURE.md`](ARCHITECTURE.md) for component boundaries and data flow.
 
+## Engineering documentation
+
+The repository deliberately separates implementation, security assumptions and research claims:
+
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — component boundaries, data flow and behavior-sensitive interfaces
+- [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) — assets, trust boundaries, attacker profiles, known security debt and abuse cases
+- [`docs/EVALUATION.md`](docs/EVALUATION.md) — reproducible ML/security evaluation protocol and claims policy
+- [`SECURITY.md`](SECURITY.md) — deployment boundaries, secret handling and responsible-use guidance
+- [`docs/research/`](docs/research/) — preserved academic/research artifacts kept separate from runtime source
+
 ## Key components
 
 | Path | Responsibility |
@@ -105,7 +115,7 @@ For that reason, the retraining `accuracy` value should be interpreted as an **a
 
 The current `xai_explanation` output is a **rule-based explanation layer** that highlights selected traffic features. It is not a SHAP or LIME implementation.
 
-These distinctions are intentional: claims in this repository are limited to behavior that can be traced to the implementation.
+These distinctions are intentional: claims in this repository are limited to behavior that can be traced to the implementation. See [`docs/EVALUATION.md`](docs/EVALUATION.md) for the evidence standard used by the project.
 
 ## Technology
 
@@ -157,6 +167,8 @@ For example, in PowerShell:
 ```powershell
 $env:HONEYPOT_SECRET = "replace-with-a-long-random-value"
 $env:HONEYPOT_HOST = "http://127.0.0.1:5001"
+$env:KAFKA_BOOTSTRAP = "localhost:9092"
+$env:ABHEDYA_LOG_HMAC_KEY = "replace-with-a-long-random-value"
 ```
 
 Never commit real credentials or secret keys.
@@ -171,15 +183,25 @@ python start_abhedya.py
 
 Individual services can also be started separately while debugging or testing their respective pipelines.
 
+## Continuous integration
+
+The lightweight GitHub Actions pipeline is intentionally dependency-light and protects repository/refactoring quality by checking:
+
+- tracked runtime/generated artifacts are not reintroduced;
+- core Python source files compile successfully;
+- behavior-sensitive contracts such as ensemble weights, fallback threshold, Kafka topics and response action names remain unchanged.
+
+These checks do not replace full integration testing with Kafka, TShark, model artifacts and SQLite, but they provide a safe baseline for repository maintenance.
+
 ## Security status
 
 ABHEDYA is a research prototype. Repository hardening is separating development defaults, runtime data, debug artifacts and security-sensitive configuration from source-controlled application code.
 
-See [`SECURITY.md`](SECURITY.md) for responsible-use and security notes.
+See [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) and [`SECURITY.md`](SECURITY.md) for the current security boundaries and known debt.
 
 ## Repository hygiene
 
-Runtime databases, packet captures, logs, local environment files, caches and generated diagnostics should not be committed. The repository `.gitignore` documents the intended boundary between source code and runtime state.
+Runtime databases, packet captures, logs, local environment files, caches and generated diagnostics should not be committed. The repository `.gitignore` documents the intended boundary between source code and runtime state, and CI rejects the most important generated/runtime artifact classes if they are tracked again.
 
 ## Current limitations
 
@@ -188,6 +210,7 @@ Runtime databases, packet captures, logs, local environment files, caches and ge
 - SQLite remains the primary persistence layer and is suitable for this prototype workload rather than horizontally scaled deployment.
 - The DQN online retraining path does not currently provide an independent hold-out validation benchmark.
 - Rule-based decision explanations are exposed as `xai_explanation`; SHAP/LIME attribution is not currently implemented.
+- The main Flask application still contains legacy development authentication/session handling that requires a backward-compatible migration before untrusted deployment.
 - Production-grade identity, secret management, deployment isolation and observability require additional hardening before internet-facing deployment.
 
 ## Responsible use
