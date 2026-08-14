@@ -1,1 +1,0 @@
-{"timestamp": "2025-11-22T14:02:48.451801+00:00", "src_ip": "10.0.0.55", "payload": {"src_ip": "10.0.0.55", "detection_id": "det-TEST-001", "final_score": 0.82, "asset_id": "AST-XXXX", "operation_code": null}, "status": "db_insert_failed", "extra": {"error": "database is locked"}}

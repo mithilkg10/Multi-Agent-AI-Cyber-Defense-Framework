@@ -19,6 +19,8 @@ from kafka import KafkaConsumer
 import asyncio
 import time
 import logging
+import hmac as _password_hmac
+from werkzeug.security import check_password_hash, generate_password_hash
 
 producer = None
 try:
@@ -27,7 +29,10 @@ except Exception as e:
     print(f"⚠️ Kafka producer init failed: {e}")
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey"
+_LEGACY_FLASK_SECRET = "supersecretkey"
+app.secret_key = os.environ.get("ABHEDYA_FLASK_SECRET", _LEGACY_FLASK_SECRET)
+if app.secret_key == _LEGACY_FLASK_SECRET:
+    print("⚠️ ABHEDYA_FLASK_SECRET is not configured; using the legacy development session secret.")
 
 DB_NAME = "cyber_defense.db"
 PREDICT_URL = "http://127.0.0.1:5000/predict"
@@ -851,17 +856,45 @@ def init_db():
 
     conn.close()
 
+def _password_matches_and_upgrade(cursor, table, row, candidate_password):
+    """Verify a password and transparently migrate legacy plaintext rows."""
+    stored = str(row["password"] or "")
+    candidate = str(candidate_password or "")
+
+    if stored.startswith(("scrypt:", "pbkdf2:")):
+        try:
+            return check_password_hash(stored, candidate)
+        except (ValueError, TypeError):
+            return False
+
+    if not _password_hmac.compare_digest(stored, candidate):
+        return False
+
+    upgraded = generate_password_hash(candidate)
+    if table == "admins":
+        cursor.execute("UPDATE admins SET password=? WHERE id=?", (upgraded, row["id"]))
+    elif table == "users":
+        cursor.execute("UPDATE users SET password=? WHERE id=?", (upgraded, row["id"]))
+    else:
+        raise ValueError(f"Unsupported credential table: {table}")
+    return True
+
+
 def create_default_admin():
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM admins WHERE username='admin'")
     if not cursor.fetchone():
+        default_password = os.environ.get("ABHEDYA_DEFAULT_ADMIN_PASSWORD", "Admin@123")
         cursor.execute(
             "INSERT INTO admins (username, password, full_name) VALUES (?, ?, ?)",
-            ("admin", "Admin@123", "System Administrator")
+            ("admin", generate_password_hash(default_password), "System Administrator")
         )
         conn.commit()
-        print("✅ Default admin created: admin / Admin@123")
+        if default_password == "Admin@123":
+            print("⚠️ Default admin created with the legacy development password. Set ABHEDYA_DEFAULT_ADMIN_PASSWORD before first run.")
+        else:
+            print("✅ Default admin created using ABHEDYA_DEFAULT_ADMIN_PASSWORD.")
     conn.close()
 
 # -------------------- Utility functions --------------------
@@ -901,8 +934,8 @@ def check_user(username, password):
     cursor.execute("SELECT * FROM admins WHERE username=?", (username,))
     admin = cursor.fetchone()
     if admin:
-        if admin["password"] == password:
-            cursor.execute("UPDATE admins SET last_login=? WHERE id=?", 
+        if _password_matches_and_upgrade(cursor, "admins", admin, password):
+            cursor.execute("UPDATE admins SET last_login=? WHERE id=?",
                            (datetime.datetime.now().isoformat(), admin["id"]))
             conn.commit()
             conn.close()
@@ -913,8 +946,8 @@ def check_user(username, password):
     cursor.execute("SELECT * FROM users WHERE username=?", (username,))
     user = cursor.fetchone()
     if user:
-        if user["password"] == password:
-            cursor.execute("UPDATE users SET last_login=? WHERE id=?", 
+        if _password_matches_and_upgrade(cursor, "users", user, password):
+            cursor.execute("UPDATE users SET last_login=? WHERE id=?",
                            (datetime.datetime.now().isoformat(), user["id"]))
             conn.commit()
             conn.close()
