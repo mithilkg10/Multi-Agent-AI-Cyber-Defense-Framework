@@ -64,5 +64,20 @@ class ProducerContractTests(unittest.TestCase):
         self.assertIn('os.environ.get("KAFKA_BOOTSTRAP"', source)
 
 
+class HoneypotControllerContractTests(unittest.TestCase):
+    def test_controller_targets_running_honeypot_default_port(self):
+        source = read_source("honeypot_controller.py")
+        self.assertIn('os.getenv("HONEYPOT_PORT", "5001")', source)
+
+    def test_controller_validates_attacker_ip_before_routing(self):
+        source = read_source("honeypot_controller.py")
+        self.assertIn("ipaddress.ip_address", source)
+        self.assertIn("attacker_ip = normalize_ip(raw_ip)", source)
+
+    def test_response_action_contract_is_preserved(self):
+        source = read_source("honeypot_controller.py")
+        self.assertIn('"send_to_honeypot"', source)
+
+
 if __name__ == "__main__":
     unittest.main()
