@@ -146,6 +146,9 @@ The repository currently includes several defensive mechanisms:
 
 - rate tracking for repeated login attempts and automatic blocklist insertion;
 - role-based session state used by the dashboard workflow;
+- environment-configurable Flask session signing with an explicit local-compatibility fallback;
+- Werkzeug password hashing for newly provisioned administrator credentials;
+- transparent upgrade of legacy plaintext admin/user rows to password hashes after a successful login;
 - SQLite parameterized statements in many persistence paths;
 - WAL-oriented SQLite configuration for concurrent local access;
 - a separate deception service rather than rendering all decoy behavior inside the primary dashboard process;
@@ -153,29 +156,22 @@ The repository currently includes several defensive mechanisms:
 - HMAC-SHA256 signatures for stored detection metadata;
 - environment-configurable HMAC signing key with a compatibility fallback;
 - configurable Kafka endpoints/topics with stable local defaults;
+- validated/canonicalized attacker IP values before honeypot-controller firewall and forensic-log operations;
 - read-only access mode for the honeypot intelligence source where used;
-- repository controls that prevent runtime databases, PCAPs and exported telemetry from being committed again.
+- repository controls that prevent runtime databases, PCAPs and exported telemetry from being committed again;
+- CI guards for behavior-sensitive model/pipeline/security contracts.
 
 These controls reduce risk but do not make the prototype production-ready.
 
 ## Known security debt
 
-### Main Flask session secret
+### Development compatibility fallbacks
 
-`app.py` currently contains a hard-coded development session secret. This must be migrated to runtime secret configuration before any untrusted deployment. The change should be tested because rotating a Flask secret invalidates existing signed sessions.
+The application now supports `ABHEDYA_FLASK_SECRET`, `ABHEDYA_DEFAULT_ADMIN_PASSWORD`, and `ABHEDYA_LOG_HMAC_KEY` through the runtime environment. To preserve the behavior of existing local/demo deployments, legacy development values remain explicit fallbacks when those variables are absent.
 
-### Password storage and default credentials
+For any untrusted deployment, all three security values must be configured externally. A future production profile should fail closed rather than accepting development fallbacks.
 
-The current authentication implementation stores/compares passwords as plaintext and can seed a default administrator credential. This is incompatible with production security expectations.
-
-A safe migration should:
-
-1. introduce a modern password hash such as Argon2id or bcrypt;
-2. continue recognizing legacy rows long enough to migrate existing local databases;
-3. re-hash a successfully authenticated legacy credential;
-4. remove hard-coded default passwords;
-5. support explicit first-run administrator provisioning;
-6. verify that existing login routes and role behavior remain unchanged from the user's perspective.
+Existing plaintext credential rows are accepted only as a migration path: a successful legacy login upgrades the stored value to a Werkzeug password hash. Newly provisioned administrator credentials are hashed before storage.
 
 ### Kafka transport security
 
@@ -189,6 +185,10 @@ State-changing browser routes should be reviewed for CSRF protection, secure coo
 
 Administrative endpoints should be systematically enumerated and verified to enforce the intended role checks. This should be covered by regression tests rather than inferred from route names.
 
+### Main application maintainability
+
+`app.py` remains a large monolithic Flask module with historical duplicate imports and development-era comments. Refactoring should be incremental and protected by route/auth/database regression tests so cleanup does not change behavior.
+
 ### Model and online-adaptation risk
 
 Recent detections can feed the DQN adaptation workflow, including pseudo-labels derived from existing predictions/scores. A hostile telemetry source could therefore influence later adaptation if the training path is enabled without data-quality controls.
@@ -201,12 +201,14 @@ A security regression suite should eventually include:
 - unauthorized requests to every administrative route;
 - CSRF attempts against state-changing routes;
 - SQL/meta-character input in login and administrative fields;
+- migration of legacy plaintext credential rows;
 - malformed Kafka values and unexpected payload types;
 - replayed detection events;
 - corrupted or missing model artifacts;
 - model exceptions and fallback behavior;
 - malformed PCAP/packet input;
 - honeypot payloads containing HTML/script content;
+- invalid/non-IP honeypot-routing inputs;
 - database-lock and partial-write scenarios;
 - tampering with signed detection rows;
 - attempts to access or mutate the honeypot's read-only intelligence source.
@@ -215,8 +217,7 @@ A security regression suite should eventually include:
 
 Before describing ABHEDYA as deployment-ready, the project should be able to demonstrate:
 
-- hashed credentials with a documented migration path;
-- runtime-managed session/HMAC secrets;
+- mandatory externally managed session/HMAC/admin secrets with development fallbacks disabled;
 - explicit administrator authorization tests;
 - CSRF and secure-cookie protections;
 - authenticated/encrypted Kafka transport;
@@ -224,7 +225,8 @@ Before describing ABHEDYA as deployment-ready, the project should be able to dem
 - reproducible model evaluation on independent data;
 - dependency/security scanning in CI;
 - documented backup/recovery procedures;
-- no sensitive runtime artifacts in Git history or current source control.
+- removal/rotation of any sensitive values exposed in historical Git commits;
+- no sensitive runtime artifacts in the current source tree.
 
 ## Non-goals
 
