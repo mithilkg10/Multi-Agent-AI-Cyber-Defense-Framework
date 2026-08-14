@@ -135,12 +135,28 @@ C:\kafka\kafka
 
 Adjust that local configuration for your environment before using the orchestrator.
 
-### Environment configuration
+### Python environment
 
-Copy the example file and replace placeholder secrets where supported by your runtime configuration:
+Create and activate a virtual environment, then install the focused project dependencies:
 
 ```bash
-copy .env.example .env
+python -m venv venv
+venv\Scripts\activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+The repository also contains model/runtime integrations whose exact compatibility should be validated against the environment used to train or export the supplied model artifacts.
+
+### Environment configuration
+
+`.env.example` documents environment variables that are read by the current code. The application does **not** automatically load `.env` files, so export/set these values in the process environment before starting the services.
+
+For example, in PowerShell:
+
+```powershell
+$env:HONEYPOT_SECRET = "replace-with-a-long-random-value"
+$env:HONEYPOT_HOST = "http://127.0.0.1:5001"
 ```
 
 Never commit real credentials or secret keys.
@@ -157,7 +173,7 @@ Individual services can also be started separately while debugging or testing th
 
 ## Security status
 
-ABHEDYA is a research prototype. The hardening branch is actively separating development defaults, runtime data, debug artifacts and security-sensitive configuration from source-controlled application code.
+ABHEDYA is a research prototype. Repository hardening is separating development defaults, runtime data, debug artifacts and security-sensitive configuration from source-controlled application code.
 
 See [`SECURITY.md`](SECURITY.md) for responsible-use and security notes.
 
