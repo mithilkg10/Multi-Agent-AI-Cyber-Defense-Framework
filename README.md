@@ -1,51 +1,57 @@
-# ABHEDYA — Multi-Agent AI Cyber Defense Framework
+# ABHEDYA
 
-ABHEDYA is a research and engineering prototype for network-security monitoring, multi-model threat scoring, deception, and response orchestration. The system combines packet-derived telemetry, supervised and reinforcement-learning components, Kafka-based event flow, a Flask SIEM-style dashboard, and a standalone honeypot service.
+## Multi Agent AI Cyber Defense Framework
 
-The repository is intended to demonstrate the architecture and implementation of an end-to-end cyber-defense pipeline. It is not presented as a production SIEM or as a replacement for independently validated security controls.
+ABHEDYA is a research and engineering prototype for network security monitoring, hybrid threat scoring, deception, automated response, and security telemetry analysis.
+
+The project combines packet derived telemetry, machine learning, reinforcement learning, Kafka event transport, Flask based security workflows, SQLite persistence, and a standalone honeypot service.
+
+ABHEDYA is intended for defensive security research, controlled laboratories, academic demonstrations, and authorized testing. It is not presented as a production SIEM or as a replacement for independently validated security controls.
 
 ## What the system implements
 
 ### Hybrid threat scoring
 
-`backend/hybrid_decision.py` combines three model outputs:
+The decision layer combines three model outputs:
 
-- **XGBoost** for tabular traffic features
-- **CNN-LSTM** for learned traffic-pattern scoring
-- **DQN** for policy/action selection
+* XGBoost for tabular traffic features
+* CNN LSTM for learned traffic pattern scoring
+* DQN for policy and action selection
 
-The current ensemble score is calculated as:
+The current ensemble is:
 
 ```text
-0.4 × XGBoost score + 0.4 × CNN-LSTM score + 0.2 × DQN action score
+0.4 × XGBoost score + 0.4 × CNN LSTM score + 0.2 × DQN action score
 ```
 
-The final score is evaluated against a configurable threat threshold stored in SQLite. When the threshold is crossed, the decision layer can publish a honeypot trigger through Kafka.
+The final score is compared with a configurable threat threshold stored in SQLite. When the threshold is crossed, the decision layer can publish a deception trigger through Kafka.
 
-### Network telemetry and event pipeline
+### Network telemetry
 
 The project includes:
 
-- TShark/PyShark packet-capture integration
-- Kafka producers and consumers for event transport
-- SQLite-backed telemetry and detection records
-- server-sent-event and dashboard endpoints for live views
-- capture management and PCAP handling
+* TShark and PyShark packet capture integration
+* Kafka producers and consumers
+* SQLite backed telemetry and detection records
+* Server Sent Events for live views
+* PCAP workflows
+* Detection and response history
 
 ### Active deception
 
-`honeypot_app.py` runs as a separate Flask service and supports multiple decoy personas, including finance, SCADA-like, and military-themed datasets. Accesses are logged to a dedicated honeypot database and can be correlated with the main application workflow.
+`honeypot_app.py` runs as a separate Flask service and supports multiple synthetic decoy personas. Honeypot interactions are logged independently and can be correlated with the main security workflow.
 
-### Response and administration
+### Response workflows
 
-The application contains mechanisms for:
+The application includes:
 
-- IP blocklisting and timed expiry
-- honeypot redirection
-- detection and response history
-- administrator views and manual controls
-- login-event monitoring
-- configurable thresholds
+* IP blocklisting and timed expiry
+* Honeypot redirection
+* Detection history
+* Response history
+* Administrative controls
+* Login event monitoring
+* Configurable threat thresholds
 
 ## Architecture
 
@@ -53,7 +59,7 @@ The application contains mechanisms for:
 Network traffic
       |
       v
-TShark / PyShark capture
+TShark and PyShark
       |
       v
 Feature preparation
@@ -67,87 +73,89 @@ Kafka event flow             Direct prediction path
                      |
                      v
              Hybrid decision layer
-         XGBoost + CNN-LSTM + DQN
+        XGBoost + CNN LSTM + DQN
                      |
           +----------+----------+
           |                     |
           v                     v
-   SIEM/dashboard          Deception trigger
+ Security dashboard       Deception trigger
                                 |
                                 v
                          Honeypot service
 ```
 
-See [`ARCHITECTURE.md`](ARCHITECTURE.md) for component boundaries and data flow.
-
-## Engineering documentation
-
-The repository deliberately separates implementation, security assumptions and research claims:
-
-- [`ARCHITECTURE.md`](ARCHITECTURE.md) — component boundaries, data flow and behavior-sensitive interfaces
-- [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) — assets, trust boundaries, attacker profiles, known security debt and abuse cases
-- [`docs/EVALUATION.md`](docs/EVALUATION.md) — reproducible ML/security evaluation protocol and claims policy
-- [`SECURITY.md`](SECURITY.md) — deployment boundaries, secret handling and responsible-use guidance
-- [`docs/research/`](docs/research/) — preserved academic/research artifacts kept separate from runtime source
+See `ARCHITECTURE.md` for component boundaries and data flow.
 
 ## Key components
 
 | Path | Responsibility |
-|---|---|
-| `app.py` | Main Flask dashboard, API routes, persistence helpers, capture orchestration and administrative workflows |
-| `backend/feature_builder.py` | Aligns raw telemetry with model input schemas |
+| --- | --- |
+| `app.py` | Main Flask dashboard, API routes, persistence helpers, capture orchestration, and administrative workflows |
+| `backend/feature_builder.py` | Aligns telemetry with model input schemas |
 | `backend/xgboost_module.py` | XGBoost inference wrapper |
-| `backend/cnn_lstm_module.py` | CNN-LSTM inference wrapper |
+| `backend/cnn_lstm_module.py` | CNN LSTM inference wrapper |
 | `backend/dqn_module.py` | DQN inference wrapper |
-| `backend/hybrid_decision.py` | Ensemble scoring, threshold decision and honeypot trigger publication |
-| `backend/dqn_retrain.py` | Experimental online DQN adaptation using recent stored detections |
-| `anomaly_detector.py` | Anomaly-monitoring workflow |
-| `kafka_models_consumer.py` | Kafka-driven model-processing path |
+| `backend/hybrid_decision.py` | Ensemble scoring, threshold decision, and deception trigger publication |
+| `backend/dqn_retrain.py` | Experimental DQN adaptation using recent stored detections |
+| `kafka_models_consumer.py` | Kafka driven model processing path |
 | `honeypot_app.py` | Standalone deception service |
-| `honeypot_controller.py` | Honeypot-control workflow |
-| `start_abhedya.py` | Windows-oriented local service orchestrator |
+| `honeypot_controller.py` | Honeypot control workflow |
+| `start_abhedya.py` | Windows oriented local service orchestrator |
 
-## Model and evaluation notes
+## Engineering documentation
 
-The repository contains trained model artifacts and scripts used to inspect model performance. The online DQN retraining path uses recent detection records as training telemetry and may derive pseudo-labels from existing predictions/scores when a label is unavailable.
+The repository separates implementation, research claims, security assumptions, and evaluation boundaries.
 
-For that reason, the retraining `accuracy` value should be interpreted as an **adaptation/training diagnostic**, not an independent generalization benchmark.
+* `ARCHITECTURE.md`: component boundaries and data flow
+* `docs/THREAT_MODEL.md`: assets, trust boundaries, attacker profiles, abuse cases, and known debt
+* `docs/EVALUATION.md`: evaluation protocol and claims policy
+* `SECURITY.md`: deployment boundaries, secrets, and responsible use
+* `docs/research/`: preserved academic and research artifacts
 
-The current `xai_explanation` output is a **rule-based explanation layer** that highlights selected traffic features. It is not a SHAP or LIME implementation.
+## Model and evaluation boundaries
 
-These distinctions are intentional: claims in this repository are limited to behavior that can be traced to the implementation. See [`docs/EVALUATION.md`](docs/EVALUATION.md) for the evidence standard used by the project.
+The online DQN adaptation path may use recent detection records and pseudo labels derived from existing outputs when a ground truth label is unavailable.
+
+For that reason, any retraining accuracy value should be interpreted as an adaptation or training diagnostic rather than an independent generalization benchmark.
+
+The current `xai_explanation` output is a rule based explanation layer. It is not a SHAP or LIME attribution implementation.
+
+These distinctions are intentional and are documented so the repository does not make claims that exceed its evidence.
 
 ## Technology
 
-- **Backend:** Python, Flask, SQLite
-- **Streaming:** Apache Kafka
-- **Network analysis:** TShark, PyShark, Wireshark-compatible PCAP workflows
-- **ML:** XGBoost / scikit-learn ecosystem, TensorFlow/Keras-compatible CNN-LSTM artifacts, Stable-Baselines3 DQN
-- **Frontend:** Jinja templates, HTML, CSS, JavaScript
-- **Concurrency:** Python threads, queues, SQLite WAL-oriented access patterns
+* Python
+* Flask
+* SQLite
+* Apache Kafka
+* TShark
+* PyShark
+* XGBoost
+* TensorFlow and Keras compatible model artifacts
+* Stable Baselines3 DQN
+* Jinja templates
+* HTML, CSS, and JavaScript
 
 ## Local development
 
 ### Prerequisites
 
-The current startup orchestrator is Windows-oriented and expects:
+The current integrated startup workflow is Windows oriented and expects:
 
-- Python 3
-- TShark/Wireshark available on the host
-- Apache Kafka and ZooKeeper available locally
-- Kafka configured at `localhost:9092`
+* Python 3
+* TShark or Wireshark available on the host
+* Apache Kafka and ZooKeeper available locally
+* Kafka available at `localhost:9092`
 
-`start_abhedya.py` currently assumes a Kafka installation under:
+The orchestrator currently assumes a Kafka installation under:
 
 ```text
 C:\kafka\kafka
 ```
 
-Adjust that local configuration for your environment before using the orchestrator.
+Adjust that local path for your own environment.
 
 ### Python environment
-
-Create and activate a virtual environment, then install the focused project dependencies:
 
 ```bash
 python -m venv venv
@@ -156,13 +164,11 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-The repository also contains model/runtime integrations whose exact compatibility should be validated against the environment used to train or export the supplied model artifacts.
-
 ### Environment configuration
 
-`.env.example` documents environment variables that are read by the current code. The application does **not** automatically load `.env` files, so export/set these values in the process environment before starting the services.
+`.env.example` documents the environment variables read by the current application.
 
-For example, in PowerShell:
+Example PowerShell configuration:
 
 ```powershell
 $env:ABHEDYA_FLASK_SECRET = "replace-with-a-long-random-value"
@@ -173,58 +179,47 @@ $env:KAFKA_BOOTSTRAP = "localhost:9092"
 $env:ABHEDYA_LOG_HMAC_KEY = "replace-with-a-long-random-value"
 ```
 
-Never commit real credentials or secret keys.
-
-For compatibility with existing local/demo databases, the application retains explicit development fallbacks when the main session/admin/HMAC environment values are omitted. Configure the environment values above before any untrusted deployment.
-
-### Authentication compatibility
-
-Newly provisioned administrator credentials are stored using Werkzeug password hashing. Existing local databases that still contain legacy plaintext admin/user rows remain usable: after a successful legacy login, the stored credential is transparently upgraded to a password hash.
-
-This migration keeps existing login behavior intact while removing plaintext comparison from the normal authentication path.
+Never commit real credentials, secrets, private keys, sensitive packet captures, or production database content.
 
 ### Start
-
-For the Windows-oriented integrated local workflow:
 
 ```bash
 python start_abhedya.py
 ```
 
-Individual services can also be started separately while debugging or testing their respective pipelines.
-
 ## Continuous integration
 
-The lightweight GitHub Actions pipeline is intentionally dependency-light and protects repository/refactoring quality by checking:
+The GitHub Actions baseline checks:
 
-- tracked runtime/generated artifacts are not reintroduced;
-- core Python source files compile successfully;
-- behavior-sensitive contracts such as ensemble weights, fallback threshold, Kafka topics and response action names remain unchanged;
-- main-session configuration and compatibility-preserving password hardening remain present.
+* Repository hygiene
+* Python source compilation
+* Behavior sensitive contracts
+* Authentication hardening expectations
+* Kafka topic and response contract stability
 
-These checks do not replace full integration testing with Kafka, TShark, model artifacts and SQLite, but they provide a safe baseline for repository maintenance.
+The current lightweight contract tests are intentionally dependency light. They do not replace full integration testing with Kafka, TShark, trained model artifacts, and SQLite.
 
 ## Security status
 
-ABHEDYA is a research prototype. Repository hardening separates development defaults, runtime data, debug artifacts and security-sensitive configuration from source-controlled application code. The main Flask session secret and first-run administrator password can be supplied through the environment; new administrator credentials are hashed, and legacy plaintext rows are upgraded on successful authentication.
+ABHEDYA is a research prototype.
 
-See [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) and [`SECURITY.md`](SECURITY.md) for the current security boundaries and remaining debt.
+The repository documents its current hardening state, secret handling expectations, authentication compatibility behavior, model security considerations, honeypot isolation requirements, and known production gaps.
 
-## Repository hygiene
-
-Runtime databases, packet captures, logs, local environment files, caches and generated diagnostics should not be committed. The repository `.gitignore` documents the intended boundary between source code and runtime state, and CI rejects the most important generated/runtime artifact classes if they are tracked again.
+See `SECURITY.md` and `docs/THREAT_MODEL.md`.
 
 ## Current limitations
 
-- The application is currently optimized for a local Windows development environment.
-- Several services expect locally running Kafka/ZooKeeper infrastructure.
-- SQLite remains the primary persistence layer and is suitable for this prototype workload rather than horizontally scaled deployment.
-- The DQN online retraining path does not currently provide an independent hold-out validation benchmark.
-- Rule-based decision explanations are exposed as `xai_explanation`; SHAP/LIME attribution is not currently implemented.
-- Development compatibility fallbacks remain available for session/admin/HMAC secrets when environment configuration is omitted; hardened deployments should explicitly configure those values.
-- `app.py` remains a large historical Flask module and should only be decomposed incrementally behind regression tests.
-- Production-grade CSRF protection, systematic route-authorization testing, authenticated/encrypted Kafka transport, deployment isolation and observability require additional hardening before internet-facing deployment.
+* The integrated startup workflow is currently Windows oriented.
+* Several services expect locally running Kafka and ZooKeeper infrastructure.
+* SQLite is appropriate for the current prototype workload rather than horizontal production scale.
+* DQN adaptation does not currently provide an independent holdout validation benchmark.
+* The explanation layer is rule based rather than SHAP or LIME.
+* Development compatibility fallbacks remain available for selected secrets.
+* `app.py` remains a large historical Flask module.
+* Production grade CSRF protection, route authorization testing, Kafka transport security, deployment isolation, and observability require further hardening.
 
 ## Responsible use
 
-This repository is intended for defensive security research, controlled lab environments and authorized testing. Only capture, analyze or interact with systems for which you have explicit permission.
+Use ABHEDYA only on systems, networks, accounts, and data for which you have explicit authorization.
+
+See `SHOWCASE.md` for a concise reviewer path.
