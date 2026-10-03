@@ -13,7 +13,9 @@ REAL_DB = os.path.join(BASE_DIR, "intelligence_assets.db")
 MAIN_DB = os.path.join(BASE_DIR, "cyber_defense.db")
 
 app = Flask(__name__, template_folder="templates")
-app.secret_key = os.environ.get("HONEYPOT_SECRET", "hp-secret-change-me")
+app.secret_key = os.environ.get("HONEYPOT_SECRET")
+if not app.secret_key or len(app.secret_key) < 32:
+    raise RuntimeError("HONEYPOT_SECRET must be set to at least 32 characters")
 
 # -------------------- DB helpers --------------------
 def get_hp_db():
@@ -267,7 +269,7 @@ host = 10.0.0.12
 port = 1433
 database = abhedya_defense_prod
 username = sa_master
-password = admin_master_superpass
+password = [SYNTHETIC DECOY - NO REAL CREDENTIAL]
 
 [DECOY_BEACON_MONITOR]
 # Token signature: {sid}

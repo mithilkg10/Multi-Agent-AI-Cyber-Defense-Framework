@@ -39,10 +39,10 @@ class AppSecurityContractTests(unittest.TestCase):
         self.assertIn("ABHEDYA_FLASK_SECRET", source)
         self.assertNotIn('app.secret_key = "supersecretkey"', source)
 
-    def test_default_admin_password_is_hashed_before_storage(self):
+    def test_admin_requires_configured_password_hash(self):
         source = read_source("app.py")
-        self.assertIn("ABHEDYA_DEFAULT_ADMIN_PASSWORD", source)
-        self.assertIn("generate_password_hash(default_password)", source)
+        self.assertIn("ABHEDYA_ADMIN_PASSWORD_HASH", source)
+        self.assertNotIn("Admin@123", source)
 
     def test_legacy_plaintext_rows_are_migrated_on_successful_login(self):
         source = read_source("app.py")
@@ -70,7 +70,7 @@ class KafkaPipelineContractTests(unittest.TestCase):
     def test_log_hmac_key_is_runtime_configurable(self):
         source = read_source("kafka_models_consumer.py")
         self.assertIn("ABHEDYA_LOG_HMAC_KEY", source)
-        self.assertIn('LOG_HMAC_KEY = "supersecretkey"', source)
+        self.assertNotIn('LOG_HMAC_KEY = "supersecretkey"', source)
 
 
 class ProducerContractTests(unittest.TestCase):

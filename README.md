@@ -183,18 +183,21 @@ pip install -r requirements.txt
 
 `.env.example` documents the environment variables read by the current application.
 
-Example PowerShell configuration:
+Set the following names in the process environment before starting the local research stack. Use unique random session keys of at least 32 characters. Generate a Werkzeug `scrypt` or `pbkdf2` hash of your private owner password locally; store only that hash in `ABHEDYA_ADMIN_PASSWORD_HASH`.
 
 ```powershell
-$env:ABHEDYA_FLASK_SECRET = "replace-with-a-long-random-value"
-$env:ABHEDYA_DEFAULT_ADMIN_PASSWORD = "replace-with-a-strong-unique-password"
-$env:HONEYPOT_SECRET = "replace-with-a-long-random-value"
+$env:ABHEDYA_FLASK_SECRET = ""
+$env:ABHEDYA_ADMIN_USERNAME = ""
+$env:ABHEDYA_ADMIN_PASSWORD_HASH = ""
+$env:HONEYPOT_SECRET = ""
 $env:HONEYPOT_HOST = "http://127.0.0.1:5001"
 $env:KAFKA_BOOTSTRAP = "localhost:9092"
-$env:ABHEDYA_LOG_HMAC_KEY = "replace-with-a-long-random-value"
+$env:ABHEDYA_LOG_HMAC_KEY = ""
 ```
 
 Never commit real credentials, secrets, private keys, sensitive packet captures, or production database content.
+
+Private owner login is `http://127.0.0.1:5000/login` with `ABHEDYA_ADMIN_USERNAME` and the password whose hash you configured. No public recruiter account is provisioned: the current user routes include active capture and response controls, so a restricted public demo cannot be asserted safely. Existing local databases may still contain an older administrator; rotate or remove that account before exposing the stack beyond localhost.
 
 ### Start
 

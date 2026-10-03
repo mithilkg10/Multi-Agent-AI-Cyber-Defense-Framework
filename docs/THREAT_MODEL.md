@@ -167,9 +167,7 @@ These controls reduce risk but do not make the prototype production-ready.
 
 ### Development compatibility fallbacks
 
-The application now supports `ABHEDYA_FLASK_SECRET`, `ABHEDYA_DEFAULT_ADMIN_PASSWORD`, and `ABHEDYA_LOG_HMAC_KEY` through the runtime environment. To preserve the behavior of existing local/demo deployments, legacy development values remain explicit fallbacks when those variables are absent.
-
-For any untrusted deployment, all three security values must be configured externally. A future production profile should fail closed rather than accepting development fallbacks.
+The main and honeypot Flask services require externally configured session signing keys. Owner provisioning requires an explicit username and Werkzeug password hash; no default owner password is created.
 
 Existing plaintext credential rows are accepted only as a migration path: a successful legacy login upgrades the stored value to a Werkzeug password hash. Newly provisioned administrator credentials are hashed before storage.
 

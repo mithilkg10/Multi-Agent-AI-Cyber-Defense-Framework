@@ -24,7 +24,7 @@ Do not commit:
 - sensitive packet captures;
 - exported login or event telemetry.
 
-Use `.env.example` as a configuration reference and supply real values through the runtime environment or an appropriate secret-management system. Important runtime values include `ABHEDYA_FLASK_SECRET`, `ABHEDYA_DEFAULT_ADMIN_PASSWORD`, `HONEYPOT_SECRET`, and `ABHEDYA_LOG_HMAC_KEY`.
+Use `.env.example` as a configuration reference and supply real values through the runtime environment or an appropriate secret-management system. Required signing values include `ABHEDYA_FLASK_SECRET` and `HONEYPOT_SECRET`. Private owner provisioning uses `ABHEDYA_ADMIN_USERNAME` and `ABHEDYA_ADMIN_PASSWORD_HASH`.
 
 If a secret has ever been committed to a public repository, removing it from the current tree is not sufficient. Treat it as compromised and rotate it.
 

@@ -28,15 +28,9 @@ HONEYPOT_TOPIC = os.environ.get("KAFKA_HONEYPOT_TOPIC", "honeypot_triggers")
 SQLITE_DB = os.environ.get("SQLITE_DB", "cyber_defense.db")
 GROUP_ID = os.environ.get("KAFKA_GROUP_ID", "models-prediction-consumer-1")
 
-# Compatibility fallback: preserves the historical signature value when no
-# runtime key is configured. Set ABHEDYA_LOG_HMAC_KEY outside development.
 LOG_HMAC_KEY = os.environ.get("ABHEDYA_LOG_HMAC_KEY")
-if not LOG_HMAC_KEY:
-    LOG_HMAC_KEY = "supersecretkey"
-    print(
-        "[consumer] WARNING: ABHEDYA_LOG_HMAC_KEY is not configured; "
-        "using the legacy development HMAC key."
-    )
+if not LOG_HMAC_KEY or len(LOG_HMAC_KEY) < 32:
+    raise RuntimeError("ABHEDYA_LOG_HMAC_KEY must be set to at least 32 characters")
 
 
 def db_connect():

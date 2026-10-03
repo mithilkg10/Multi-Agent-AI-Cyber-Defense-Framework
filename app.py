@@ -29,10 +29,9 @@ except Exception as e:
     print(f"⚠️ Kafka producer init failed: {e}")
 
 app = Flask(__name__)
-_LEGACY_FLASK_SECRET = "supersecretkey"
-app.secret_key = os.environ.get("ABHEDYA_FLASK_SECRET", _LEGACY_FLASK_SECRET)
-if app.secret_key == _LEGACY_FLASK_SECRET:
-    print("⚠️ ABHEDYA_FLASK_SECRET is not configured; using the legacy development session secret.")
+app.secret_key = os.environ.get("ABHEDYA_FLASK_SECRET")
+if not app.secret_key or len(app.secret_key) < 32:
+    raise RuntimeError("ABHEDYA_FLASK_SECRET must be set to at least 32 characters")
 
 DB_NAME = "cyber_defense.db"
 PREDICT_URL = "http://127.0.0.1:5000/predict"
@@ -881,20 +880,27 @@ def _password_matches_and_upgrade(cursor, table, row, candidate_password):
 
 
 def create_default_admin():
+    username = os.environ.get("ABHEDYA_ADMIN_USERNAME")
+    password_hash = os.environ.get("ABHEDYA_ADMIN_PASSWORD_HASH")
+    if not username and not password_hash:
+        print("No ABHEDYA owner account provisioned; set ABHEDYA_ADMIN_USERNAME and ABHEDYA_ADMIN_PASSWORD_HASH.")
+        return
+    if not username or not password_hash:
+        raise RuntimeError("Set both ABHEDYA_ADMIN_USERNAME and ABHEDYA_ADMIN_PASSWORD_HASH")
+    if not password_hash.startswith(("scrypt:", "pbkdf2:")):
+        raise RuntimeError("ABHEDYA_ADMIN_PASSWORD_HASH must be a Werkzeug password hash")
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM admins WHERE username='admin'")
-    if not cursor.fetchone():
-        default_password = os.environ.get("ABHEDYA_DEFAULT_ADMIN_PASSWORD", "Admin@123")
+    cursor.execute("SELECT * FROM admins WHERE username=?", (username,))
+    if cursor.fetchone():
+        cursor.execute("UPDATE admins SET password=? WHERE username=?", (password_hash, username))
+    else:
         cursor.execute(
             "INSERT INTO admins (username, password, full_name) VALUES (?, ?, ?)",
-            ("admin", generate_password_hash(default_password), "System Administrator")
+            (username, password_hash, "System Administrator")
         )
-        conn.commit()
-        if default_password == "Admin@123":
-            print("⚠️ Default admin created with the legacy development password. Set ABHEDYA_DEFAULT_ADMIN_PASSWORD before first run.")
-        else:
-            print("✅ Default admin created using ABHEDYA_DEFAULT_ADMIN_PASSWORD.")
+    conn.commit()
+    print("ABHEDYA owner account provisioned from environment configuration.")
     conn.close()
 
 # -------------------- Utility functions --------------------
