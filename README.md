@@ -1,5 +1,7 @@
 # ABHEDYA
 
+[Portfolio case study](https://mithilkg-portfolio.vercel.app/projects/honeybee-distributed-ai-defense)
+
 ## Multi Agent AI Cyber Defense Framework
 
 ABHEDYA is a research and engineering prototype for network security monitoring, hybrid threat scoring, deception, automated response, and security telemetry analysis.
