@@ -2,13 +2,26 @@
 
 [Portfolio case study](https://mithilkg-portfolio.vercel.app/projects/honeybee-distributed-ai-defense)
 
-## Multi Agent AI Cyber Defense Framework
+## Multi-Agent AI Cyber Defence Research Prototype
 
 ABHEDYA is a research and engineering prototype for network security monitoring, hybrid threat scoring, deception, automated response, and security telemetry analysis.
 
 The project combines packet derived telemetry, machine learning, reinforcement learning, Kafka event transport, Flask based security workflows, SQLite persistence, and a standalone honeypot service.
 
 ABHEDYA is intended for defensive security research, controlled laboratories, academic demonstrations, and authorized testing. It is not presented as a production SIEM or as a replacement for independently validated security controls.
+
+## Problem and defensive lifecycle
+
+The prototype studies how packet-derived telemetry can drive a traceable decision and a controlled response without presenting experimental model output as a production detection benchmark.
+
+| Stage | Current implementation |
+| --- | --- |
+| Detect | TShark/PyShark telemetry, Kafka or direct prediction, and hybrid XGBoost/CNN-LSTM/DQN scoring |
+| Mislead | Kafka deception trigger and a separate Flask honeypot service |
+| Neutralize | Local blocklisting, timed expiry, and response history |
+| Learn | Experimental DQN adaptation from stored detections; independent holdout validation is not yet available |
+
+Detection and response history provide an investigation record; this is not a full production incident-management system.
 
 ## What the system implements
 
@@ -224,4 +237,6 @@ See `SECURITY.md` and `docs/THREAT_MODEL.md`.
 
 Use ABHEDYA only on systems, networks, accounts, and data for which you have explicit authorization.
 
-See `SHOWCASE.md` for a concise reviewer path.
+See `SHOWCASE.md` for a concise reviewer path. No public product screenshots are committed.
+
+[Portfolio](https://mithilkg-portfolio.vercel.app) · [LinkedIn](https://www.linkedin.com/in/mithil-k-gowda) · [GitHub profile](https://github.com/mithilkg10)
