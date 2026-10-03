@@ -32,6 +32,13 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("ABHEDYA_FLASK_SECRET")
 if not app.secret_key or len(app.secret_key) < 32:
     raise RuntimeError("ABHEDYA_FLASK_SECRET must be set to at least 32 characters")
+app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax")
+
+
+@app.before_request
+def require_admin_session_for_admin_routes():
+    if (request.path == "/admin_dashboard" or request.path.startswith("/admin/")) and session.get("role") != "admin":
+        abort(403)
 
 DB_NAME = "cyber_defense.db"
 PREDICT_URL = "http://127.0.0.1:5000/predict"
@@ -2782,4 +2789,4 @@ if __name__ == "__main__":
     safe_backfill_historical_detections(min_records=1500)
     backfill_weekly_global_activity()
     start_anomaly_detector()
-    app.run(debug=True)
+    app.run(debug=False)

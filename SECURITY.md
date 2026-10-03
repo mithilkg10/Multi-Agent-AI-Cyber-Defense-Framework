@@ -26,6 +26,8 @@ Do not commit:
 
 Use `.env.example` as a configuration reference and supply real values through the runtime environment or an appropriate secret-management system. Required signing values include `ABHEDYA_FLASK_SECRET` and `HONEYPOT_SECRET`. Private owner provisioning uses `ABHEDYA_ADMIN_USERNAME` and `ABHEDYA_ADMIN_PASSWORD_HASH`.
 
+Dashboard `/admin/` routes require an administrator session. Both local Flask servers start with debug mode disabled.
+
 If a secret has ever been committed to a public repository, removing it from the current tree is not sufficient. Treat it as compromised and rotate it.
 
 ## Credential compatibility migration
